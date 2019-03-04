@@ -10,9 +10,9 @@
     </parent> 
 
     <groupId>com.ai.platform</groupId>
-    <artifactId>aiops</artifactId>
+    <artifactId>elk_log</artifactId>
     <version>1.0.0</version>
-    <packaging>jar</packaging>
+    <packaging>jar</packaging> 
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
