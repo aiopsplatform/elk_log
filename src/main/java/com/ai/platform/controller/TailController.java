@@ -2,10 +2,7 @@ package com.ai.platform.controller;
 
 import com.ai.platform.service.TailDao;
 import com.ai.pojo.*;
-import com.alibaba.fastjson.JSON;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.elasticsearch.search.SearchHit;
 import org.springframework.beans.factory.annotation.Autowired;
