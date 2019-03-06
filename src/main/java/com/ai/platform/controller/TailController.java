@@ -73,17 +73,12 @@ public class TailController {
     }
 
 
-    /*
-     * 接受前端传来的请求参数selectByIndex
-     * @param   id -- 前端传递代表索引名称的字段
-     *          使用post方式传递参数（@RequestParam注解，会以表单的形式接受数据）
-     * @return
-     * @throws UnknownHostException --端口未知异常
-     *         @RequestParam(value = "id") int id
+    /**
+     * 通过索引名称，开始时间和结束时间查询日志数据
      */
     @PostMapping(value = "selectByIndex")
     @ResponseBody
-    public String selectByIndex(@RequestBody JSONObject jsonObject) throws Exception {
+    public String selectByTime(@RequestBody JSONObject jsonObject) throws Exception {
 
         Gson selectGson = new Gson();
 
@@ -226,6 +221,12 @@ public class TailController {
         Map fieldMap = tailDao.selectFieldMap(index);
         return fieldMap;
     }
+
+    /**
+     * 字段统计
+     */
+
+
 
 
 

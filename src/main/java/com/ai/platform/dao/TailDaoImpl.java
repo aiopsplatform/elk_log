@@ -2,6 +2,7 @@ package com.ai.platform.dao;
 
 
 import com.ai.platform.service.TailDao;
+import com.ai.platform.util.FieldBean;
 import com.ai.pojo.*;
 import net.sf.json.JSONObject;
 import org.elasticsearch.action.ActionFuture;
@@ -40,9 +41,6 @@ public class TailDaoImpl implements TailDao {
     public static String inetAddr = "192.168.126.122";
     public static int clientPort = 9300;
     public static String elkIndex = "logstash-nginx-access-log";
-    public static String elkType = "doc";
-    public static Set set;
-    public static Map map;
 
     //获取ELK客户端
     public static TransportClient getClient() throws UnknownHostException {
@@ -68,77 +66,18 @@ public class TailDaoImpl implements TailDao {
         }
         return map;
     }
-
     //获取所有索引名称返回给前端
     @Override
-    public List<Tail> tailList() throws UnknownHostException {
+    public List<String> tailList() throws UnknownHostException {
 
         Map map1 = this.getIndex();
 
-        return new ArrayList<Tail>(map1.values());
+        return new ArrayList<String>(map1.values());
     }
 
 
-    //根据指定索引文件名称获取对应的所有日志文件
-    @Override
-    public List<Indexs> selectLog() throws UnknownHostException {
-        List ls = new ArrayList();
-        TransportClient client = getClient();
-        QueryBuilder qb = QueryBuilders.matchAllQuery();
-        SearchResponse sr = client.prepareSearch(elkIndex).setQuery(qb).setQuery(qb).setScroll(TimeValue.timeValueMinutes(2)).get();
-        SearchHits hits = sr.getHits();
-        for (SearchHit hit : hits) {
-            ls.add(hit);
-        }
-        return ls;
-    }
-
-
-    //根据指定的索引文件
-    @Override
-    public List getElkLogType() throws UnknownHostException {
-        List ls = new ArrayList();
-        TransportClient client = getClient();
-        QueryBuilder qb = QueryBuilders.matchAllQuery();
-        SearchResponse sr = client.prepareSearch("elk_log_type").setQuery(qb).setQuery(qb).setScroll(TimeValue.timeValueMinutes(2)).get();
-        SearchHits hits = sr.getHits();
-        for (SearchHit hit : hits) {
-            ls.add(hit.getSourceAsString());
-        }
-        return ls;
-    }
-
-
-    //根据请求中携带的请求参数indexes对应索引名称后到后台进行索引文件的查询
-    @Override
-    public List<SearchHit> selectByIndex(String indexes) throws UnknownHostException {
-        String indexName = null;
-
-        if (indexes.equals("0")) {
-            indexName = "logstash-nginx-access-log";
-        } else if (indexes.equals("1")) {
-            indexName = "filebeat-6.5.3-2019.01.23";
-        } else {
-            indexName = ".kibana_1";
-        }
-
-        List elkList = new ArrayList();
-
-        TransportClient client = getClient();
-
-        QueryBuilder qb = QueryBuilders.prefixQuery("_index", indexName);
-        SearchResponse sr = client.prepareSearch(indexName).setQuery(qb).get();
-        SearchHits hits = sr.getHits();
-        for (SearchHit hit : hits) {
-            elkList.add(hit);
-        }
-        return elkList;
-
-    }
-
-
-    /*
-    根据索引名称、开始时间和结束时间进行查询
+    /**
+     *根据索引名称、开始时间和结束时间进行查询
      */
     @Override
     public List<SearchHit> selectByTime(IndexDate indexDate) throws UnknownHostException {
@@ -152,16 +91,15 @@ public class TailDaoImpl implements TailDao {
 
         String indexName = null;
         if (indexesName.equals("0")) {
-            indexName = "logstash-nginx-access-log";
+            indexName = tailList().get(0);
+
         }
 
-
-        RangeQueryBuilder qb = QueryBuilders.rangeQuery("create_time").from(startTime).to(endTime);
+        RangeQueryBuilder qb = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(startTime).to(endTime);
         SearchResponse sr = client.prepareSearch(indexName).setQuery(qb).execute().actionGet();
         SearchHits hits = sr.getHits();
         for (SearchHit hit : hits) {
             indexByTimeList.add(hit);
-
         }
         return indexByTimeList;
     }
@@ -181,14 +119,15 @@ public class TailDaoImpl implements TailDao {
 
         //根据前端传来的indexes判断id的值，同时确定indexes的真实索引名称
         String indexName = null;
+
         if (indexes.equals("0")) {
-            indexName = "logstash-nginx-access-log";
+            indexName = tailList().get(0);
         }
 
         QueryBuilder queryBuilder = QueryBuilders.matchAllQuery();
         SearchResponse searchResponse = client.prepareSearch(indexName).
                 setQuery(queryBuilder).
-                addSort("create_time", SortOrder.DESC).
+                addSort(FieldBean.getCreatTime(), SortOrder.DESC).
                 setSize(2).execute().actionGet();
         SearchHits hits = searchResponse.getHits();
         for (SearchHit hit : hits) {
@@ -215,19 +154,19 @@ public class TailDaoImpl implements TailDao {
 
         String indexName = null;
         if (indexes.equals("0")) {
-            indexName = "logstash-nginx-access-log";
+            indexName = tailList().get(0);
         }
 
         String type = null;
         if(indexType.equals("1")){
-            type = "doc";
+            type = FieldBean.getType();
         }
 
         //按时间进行范围查询
-        QueryBuilder qb1 = QueryBuilders.rangeQuery("create_time").from(beginTime).to(endTime);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
 
         //按异常进行分组聚合
-        AggregationBuilder termsBuilder = AggregationBuilders.terms("by_response").field("response");
+        AggregationBuilder termsBuilder = AggregationBuilders.terms("by_response").field(FieldBean.getResponse());
 
         SearchResponse searchResponse = client.prepareSearch(indexName).
                 setTypes(type).
@@ -258,16 +197,16 @@ public class TailDaoImpl implements TailDao {
 
         String indexName = null;
         if (index.equals("0")) {
-            indexName = "logstash-nginx-access-log";
+            indexName = tailList().get(0);
         }
 
         //按时间进行范围查询
-        QueryBuilder qbTime = QueryBuilders.rangeQuery("create_time").from(beginTime).to(endTime);
+        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
         //按请求0-1秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery("offset").from(0).to(1000,true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(0).to(1000,true);
 
         //按offset字段进行分组
-        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field("offset");
+        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
 
         SearchResponse sr = client.prepareSearch(indexName).
                             setQuery(qbTime).
@@ -290,16 +229,16 @@ public class TailDaoImpl implements TailDao {
 
         String indexName = null;
         if (index.equals("0")) {
-            indexName = "logstash-nginx-access-log";
+            indexName = tailList().get(0);
         }
 
         //按时间进行范围查询
-        QueryBuilder qbTime = QueryBuilders.rangeQuery("create_time").from(beginTime).to(endTime);
-        //按请求0-1秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery("offset").from(1001).to(2000,true);
+        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
+        //按请求1-2秒时间进行统计
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(1001).to(2000,true);
 
         //按offset字段进行分组
-        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field("offset");
+        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
 
         SearchResponse sr = client.prepareSearch(indexName).
                 setQuery(qbTime).
@@ -322,16 +261,16 @@ public class TailDaoImpl implements TailDao {
 
         String indexName = null;
         if (index.equals("0")) {
-            indexName = "logstash-nginx-access-log";
+            indexName = tailList().get(0);
         }
 
         //按时间进行范围查询
-        QueryBuilder qbTime = QueryBuilders.rangeQuery("create_time").from(beginTime).to(endTime);
-        //按请求0-1秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery("offset").from(2001).to(3000,true);
+        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
+        //按请求2-3秒时间进行统计
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(2001).to(3000,true);
 
         //按offset字段进行分组
-        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field("offset");
+        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
 
         SearchResponse sr = client.prepareSearch(indexName).
                 setQuery(qbTime).
@@ -354,16 +293,16 @@ public class TailDaoImpl implements TailDao {
 
         String indexName = null;
         if (index.equals("0")) {
-            indexName = "logstash-nginx-access-log";
+            indexName = tailList().get(0);
         }
 
         //按时间进行范围查询
-        QueryBuilder qbTime = QueryBuilders.rangeQuery("create_time").from(beginTime).to(endTime);
-        //按请求0-1秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery("offset").from(3001).to(4000,true);
+        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
+        //按请求3-4秒时间进行统计
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(3001).to(4000,true);
 
         //按offset字段进行分组
-        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field("offset");
+        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
 
         SearchResponse sr = client.prepareSearch(indexName).
                 setQuery(qbTime).
@@ -386,16 +325,16 @@ public class TailDaoImpl implements TailDao {
 
         String indexName = null;
         if (index.equals("0")) {
-            indexName = "logstash-nginx-access-log";
+            indexName = tailList().get(0);
         }
 
         //按时间进行范围查询
-        QueryBuilder qbTime = QueryBuilders.rangeQuery("create_time").from(beginTime).to(endTime);
-        //按请求0-1秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery("offset").from(4001).to(5000,true);
+        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
+        //按请求4-5秒时间进行统计
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(4001).to(5000,true);
 
         //按offset字段进行分组
-        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field("offset");
+        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
 
         SearchResponse sr = client.prepareSearch(indexName).
                 setQuery(qbTime).
@@ -418,16 +357,16 @@ public class TailDaoImpl implements TailDao {
 
         String indexName = null;
         if (index.equals("0")) {
-            indexName = "logstash-nginx-access-log";
+            indexName = tailList().get(0);
         }
 
         //按时间进行范围查询
-        QueryBuilder qbTime = QueryBuilders.rangeQuery("create_time").from(beginTime).to(endTime);
-        //按请求0-1秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery("offset").from(5001).to(6000,true);
+        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
+        //按请求5-6秒时间进行统计
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(5001).to(6000,true);
 
         //按offset字段进行分组
-        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field("offset");
+        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
 
         SearchResponse sr = client.prepareSearch(indexName).
                 setQuery(qbTime).
@@ -454,21 +393,21 @@ public class TailDaoImpl implements TailDao {
                     .prepareState().execute().actionGet().getState()
                     .getMetaData().getIndices().get(index)
                     .getMappings();
-            mapping = mappings.get("doc").source().toString();
+            mapping = mappings.get(FieldBean.getType()).source().toString();
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
         JSONObject jsonObject = JSONObject.fromObject(mapping);
-        String doc = jsonObject.getString("doc");
+        String doc = jsonObject.getString(FieldBean.getType());
         JSONObject jsonObject1 = JSONObject.fromObject(doc);
-        String properties = jsonObject1.getString("properties");
+        String properties = jsonObject1.getString(FieldBean.getProperties());
         JSONObject jsonObject2 = JSONObject.fromObject(properties);
         Map<String,Map<String,String>> map = jsonObject2;
         for (Map.Entry<String,Map<String,String>> str :map.entrySet()){
-            if (!str.getKey().contains("@")&!str.getKey().contains("offset")&!str.getKey().contains("source")&!str.getKey().contains("tags")) {
+            if (!str.getKey().contains(FieldBean.getTimepstamp())&!str.getKey().contains(FieldBean.getOffset())&!str.getKey().contains(FieldBean.getSource())&!str.getKey().contains(FieldBean.getTags())) {
                 String key = str.getKey();
                 for (Map.Entry<String,String> ms :str.getValue().entrySet()){
-                    if (ms.getKey().equals("type")){
+                    if (ms.getKey().equals(FieldBean.getType())){
                         mp.put(key, ms.getValue());
                     }
                 }
