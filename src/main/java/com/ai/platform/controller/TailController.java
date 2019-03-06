@@ -1,6 +1,9 @@
 package com.ai.platform.controller;
 
 import com.ai.platform.service.TailDao;
+import com.ai.platform.util.FieldBean;
+import com.ai.platform.util.RequestFieldsBean;
+import com.ai.platform.util.SlowRequestCountBean;
 import com.ai.pojo.*;
 import com.google.gson.Gson;
 import net.sf.json.JSONObject;
@@ -50,7 +53,6 @@ public class TailController {
         ls.add(index3);
 
         String st = gson.toJson(ls);
-        //System.out.println(st);
 
         return st;
     }
@@ -64,9 +66,9 @@ public class TailController {
         List list = tailDao.tailList();
 
         Indexs indexs = null;
-        for (int i =0;i<list.size();i++){
-        indexs = new Indexs(i, list.get(i).toString());
-        elkLogTypeList.add(indexs);
+        for (int i = 0; i < list.size(); i++) {
+            indexs = new Indexs(i, list.get(i).toString());
+            elkLogTypeList.add(indexs);
         }
 
         return elkLogTypeList;
@@ -84,11 +86,11 @@ public class TailController {
 
 
         //解析begin_time和end_time对应的开始时间
-        String start_Time = jsonObject.get("begin_time").toString();
-        String end_Time = jsonObject.get("end_time").toString();
+        String start_Time = jsonObject.get(RequestFieldsBean.getBeginTime()).toString();
+        String end_Time = jsonObject.get(RequestFieldsBean.getEndTime()).toString();
 
         //解析索引名称对应的id
-        String indexes = jsonObject.get("indexes").toString();
+        String indexes = jsonObject.get(RequestFieldsBean.getIndex()).toString();
 
         IndexDate indexDate = new IndexDate(indexes, start_Time, end_Time);
 
@@ -99,7 +101,7 @@ public class TailController {
 
         //需要将list转换成json格式
         for (SearchHit logMessage : selectIndexByTimeList) {
-            String message = logMessage.getSourceAsMap().get("message").toString();
+            String message = logMessage.getSourceAsMap().get(FieldBean.getMessage()).toString();
             list3.add(message);
         }
         //将list转换为json格式返回给前端
@@ -107,7 +109,6 @@ public class TailController {
 
         return json;
     }
-
 
 
     /**
@@ -121,13 +122,13 @@ public class TailController {
         List realTimeList = new ArrayList();
 
         //解析索引名称对应的id
-        String indexes = jsonObject.get("indexes").toString();
+        String indexes = jsonObject.get(RequestFieldsBean.getIndex()).toString();
 
         List<SearchHit> selectRealTime = tailDao.selectRealTimeQuery(indexes);
 
         //需要将list转换成json格式
         for (SearchHit logMessage : selectRealTime) {
-            String message = logMessage.getSourceAsMap().get("message").toString();
+            String message = logMessage.getSourceAsMap().get(FieldBean.getMessage()).toString();
             realTimeList.add(message);
         }
         //将list转换为json格式返回给前端
@@ -144,16 +145,16 @@ public class TailController {
     @ResponseBody
     public List exceptionCount(@RequestBody JSONObject jsonObject) throws Exception {
 
-        /**
+        /*
          * indexes -- 索引名称
          * type -- 索引类型
          * beginTime -- 开始时间
          * endTime -- 结束时间
          */
-        String indexes = jsonObject.get("indexes").toString();
-        String type = jsonObject.get("types").toString();
-        String beginTime = jsonObject.get("begin_time").toString();
-        String endTime = jsonObject.get("end_time").toString();
+        String indexes = jsonObject.get(RequestFieldsBean.getIndex()).toString();
+        String type = jsonObject.get(RequestFieldsBean.getType()).toString();
+        String beginTime = jsonObject.get(RequestFieldsBean.getBeginTime()).toString();
+        String endTime = jsonObject.get(RequestFieldsBean.getEndTime()).toString();
 
         ExceptionCount exceptionCount = new ExceptionCount(indexes, type, beginTime, endTime);
         Map selectExceptionCount = tailDao.count(exceptionCount);
@@ -172,12 +173,12 @@ public class TailController {
      */
     @PostMapping(value = "slowRequestCount")
     @ResponseBody
-    public List slowCount(@RequestBody JSONObject jsonObject) throws UnknownHostException{
+    public List slowCount(@RequestBody JSONObject jsonObject) throws UnknownHostException {
 
         //从请求中获取对应字段的参数
-        String index = jsonObject.get("indexes").toString();
-        String beginTime = jsonObject.get("begin_time").toString();
-        String endTime = jsonObject.get("end_time").toString();
+        String index = jsonObject.get(RequestFieldsBean.getIndex()).toString();
+        String beginTime = jsonObject.get(RequestFieldsBean.getBeginTime()).toString();
+        String endTime = jsonObject.get(RequestFieldsBean.getEndTime()).toString();
         List list = new ArrayList();
         SlowCountBean slowCountBean = new SlowCountBean(index, beginTime, endTime);
 
@@ -194,12 +195,12 @@ public class TailController {
         //统计5-6秒的请求次数
         Long value6 = tailDao.selectSlowCount6(slowCountBean);
 
-        PartCount partCount1 = new PartCount("0-1", value1);
-        PartCount partCount2 = new PartCount("1-2", value2);
-        PartCount partCount3 = new PartCount("2-3", value3);
-        PartCount partCount4 = new PartCount("3-4", value4);
-        PartCount partCount5 = new PartCount("4-5", value5);
-        PartCount partCount6 = new PartCount("5-6", value6);
+        PartCount partCount1 = new PartCount(SlowRequestCountBean.getOne(), value1);
+        PartCount partCount2 = new PartCount(SlowRequestCountBean.getTwo(), value2);
+        PartCount partCount3 = new PartCount(SlowRequestCountBean.getThree(), value3);
+        PartCount partCount4 = new PartCount(SlowRequestCountBean.getFour(), value4);
+        PartCount partCount5 = new PartCount(SlowRequestCountBean.getFive(), value5);
+        PartCount partCount6 = new PartCount(SlowRequestCountBean.getSix(), value6);
         list.add(partCount1);
         list.add(partCount2);
         list.add(partCount3);
@@ -213,11 +214,11 @@ public class TailController {
     /**
      * 通过索引名称获取所有字段的名称和类型
      */
-    @GetMapping(value = "getIndexMetaData")
+    @PostMapping(value = "getIndexMetaData")
     @ResponseBody
-    public Map getIndexMetaData(String index){
+    public Map getIndexMetaData(@RequestBody JSONObject jsonObject) {
         //获取前端发来的请求携带的参数
-        //String index = jsonObject.get("indexes").toString();
+        String index = jsonObject.get(RequestFieldsBean.getIndex()).toString();
         Map fieldMap = tailDao.selectFieldMap(index);
         return fieldMap;
     }
@@ -225,11 +226,35 @@ public class TailController {
     /**
      * 字段统计
      */
+    @PostMapping(value = "fieldCount")
+    @ResponseBody
+    public String fieldsCount() {
+        //索引名称
+        String index = null;
+        //开始时间
+        String beginTime = null;
+        //结束时间
+        String endTime = null;
+        //字段名称
+        String field = null;
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+        return null;
+    }
 
 
 }

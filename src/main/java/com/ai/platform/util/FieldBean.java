@@ -10,6 +10,7 @@ public class FieldBean {
     private static String tags = "tags";
     private static String creatTime = "create_time";
     private static String response = "response";
+    private static String message = "message";
 
     public static String getType() {
         return type;
@@ -41,5 +42,9 @@ public class FieldBean {
 
     public static String getResponse() {
         return response;
+    }
+
+    public static String getMessage() {
+        return message;
     }
 }
