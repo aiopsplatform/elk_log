@@ -215,7 +215,17 @@ public class TailController {
         return list;
     }
 
-
+    /**
+     * 通过索引名称获取所有字段的名称和类型
+     */
+    @GetMapping(value = "getIndexMetaData")
+    @ResponseBody
+    public Map getIndexMetaData(String index){
+        //获取前端发来的请求携带的参数
+        //String index = jsonObject.get("indexes").toString();
+        Map fieldMap = tailDao.selectFieldMap(index);
+        return fieldMap;
+    }
 
 
 

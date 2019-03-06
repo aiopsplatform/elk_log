@@ -3,11 +3,14 @@ package com.ai.platform.dao;
 
 import com.ai.platform.service.TailDao;
 import com.ai.pojo.*;
+import net.sf.json.JSONObject;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsRequest;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.cluster.metadata.MappingMetaData;
+import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
@@ -433,6 +436,46 @@ public class TailDaoImpl implements TailDao {
         ValueCount valueCount = sr.getAggregations().get("offsetCount");
         Long value1 = valueCount.getValue();
         return value1;
+    }
+
+
+    /**
+     * 根据索引名称查询字段名称和类型
+     */
+    @Override
+    public Map selectFieldMap(String index){
+
+        ImmutableOpenMap<String, MappingMetaData> mappings;
+        String mapping = "";
+        Map mp = new HashMap();
+        try {
+            TransportClient client = getClient();
+            mappings = client.admin().cluster()
+                    .prepareState().execute().actionGet().getState()
+                    .getMetaData().getIndices().get(index)
+                    .getMappings();
+            mapping = mappings.get("doc").source().toString();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        JSONObject jsonObject = JSONObject.fromObject(mapping);
+        String doc = jsonObject.getString("doc");
+        JSONObject jsonObject1 = JSONObject.fromObject(doc);
+        String properties = jsonObject1.getString("properties");
+        JSONObject jsonObject2 = JSONObject.fromObject(properties);
+        Map<String,Map<String,String>> map = jsonObject2;
+        for (Map.Entry<String,Map<String,String>> str :map.entrySet()){
+            if (!str.getKey().contains("@")&!str.getKey().contains("offset")&!str.getKey().contains("source")&!str.getKey().contains("tags")) {
+                String key = str.getKey();
+                for (Map.Entry<String,String> ms :str.getValue().entrySet()){
+                    if (ms.getKey().equals("type")){
+                        mp.put(key, ms.getValue());
+                    }
+                }
+            }
+        }
+
+        return mp;
     }
 
 }
