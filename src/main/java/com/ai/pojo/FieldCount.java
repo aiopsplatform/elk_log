@@ -1,5 +1,6 @@
 package com.ai.pojo;
 
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 public class FieldCount {
@@ -8,10 +9,10 @@ public class FieldCount {
     private String beginTime;
     private String endTime;
     private String fieldNameId;
-    private JSONObject queryCondition;
+    private JSONArray queryCondition;
     private String rule;
 
-    public FieldCount(String index, String beginTime, String endTime, String fieldNameId, JSONObject queryCondition, String rule) {
+    public FieldCount(String index, String beginTime, String endTime, String fieldNameId, JSONArray queryCondition, String rule) {
         this.index = index;
         this.beginTime = beginTime;
         this.endTime = endTime;
@@ -52,11 +53,11 @@ public class FieldCount {
         this.fieldNameId = fieldNameId;
     }
 
-    public JSONObject getQueryCondition() {
+    public JSONArray getQueryCondition() {
         return queryCondition;
     }
 
-    public void setQueryCondition(JSONObject queryCondition) {
+    public void setQueryCondition(JSONArray queryCondition) {
         this.queryCondition = queryCondition;
     }
 

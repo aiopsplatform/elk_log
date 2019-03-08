@@ -6,8 +6,7 @@ import com.ai.platform.util.FieldBean;
 import com.ai.platform.util.RequestFieldsBean;
 import com.ai.platform.util.SloveHardCount;
 import com.ai.pojo.*;
-import com.google.gson.Gson;
-import jdk.internal.org.objectweb.asm.tree.IntInsnNode;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsRequest;
@@ -31,7 +30,6 @@ import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.springframework.stereotype.Repository;
-import org.w3c.dom.ls.LSException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -469,7 +467,7 @@ public class TailDaoImpl implements TailDao {
         String fieldName = fieldsList.get(fieldNameId).toString();
 
         //json数组
-        JSONObject querysCondition = fieldCount.getQueryCondition();
+        JSONArray querysCondition = fieldCount.getQueryCondition();
 
         //获取复选框查询条件中的字段
         String fields;
@@ -484,9 +482,9 @@ public class TailDaoImpl implements TailDao {
 
         for (int i = 0; i < querysCondition.size(); i++) {
             //按照字段进行条件查询 10 < x < 20
-            fields = querysCondition.get(RequestFieldsBean.getFields()).toString();
-            symbol = querysCondition.get(RequestFieldsBean.getSymbol()).toString();
-            number = Integer.parseInt(querysCondition.get(RequestFieldsBean.getNumber()).toString());
+            fields = querysCondition.getString(0);
+            symbol = querysCondition.getString(1);
+            number = Integer.parseInt(querysCondition.getString(3));
             QueryBuilder qbEq = null;
             QueryBuilder qbGt = null;
             QueryBuilder qbLt = null;
