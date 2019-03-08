@@ -2,7 +2,7 @@ package com.ai.platform.util;
 
 public class FieldBean {
 
-    private static String type = "doc";
+    private static String elkType = "doc";
     private static String properties = "properties";
     private static String timepstamp = "@";
     private static String offset = "offset";
@@ -11,9 +11,10 @@ public class FieldBean {
     private static String creatTime = "create_time";
     private static String response = "response";
     private static String message = "message";
+    private static String type = "type";
 
-    public static String getType() {
-        return type;
+    public static String getElkType() {
+        return elkType;
     }
 
     public static String getProperties() {
@@ -46,5 +47,9 @@ public class FieldBean {
 
     public static String getMessage() {
         return message;
+    }
+
+    public static String getType() {
+        return type;
     }
 }

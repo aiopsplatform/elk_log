@@ -3,7 +3,11 @@ package com.ai.platform.dao;
 
 import com.ai.platform.service.TailDao;
 import com.ai.platform.util.FieldBean;
+import com.ai.platform.util.RequestFieldsBean;
+import com.ai.platform.util.SloveHardCount;
 import com.ai.pojo.*;
+import com.google.gson.Gson;
+import jdk.internal.org.objectweb.asm.tree.IntInsnNode;
 import net.sf.json.JSONObject;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsRequest;
@@ -14,7 +18,7 @@ import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
-import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
@@ -23,11 +27,11 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import org.elasticsearch.search.aggregations.metrics.sum.Sum;
 import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.springframework.stereotype.Repository;
+import org.w3c.dom.ls.LSException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -36,18 +40,12 @@ import java.util.*;
 @Repository
 public class TailDaoImpl implements TailDao {
 
-    public static String clusterName = "cluster.name";
-    public static String appName = "my-application";
-    public static String inetAddr = "192.168.126.122";
-    public static int clientPort = 9300;
-    public static String elkIndex = "logstash-nginx-access-log";
-
     //获取ELK客户端
     public static TransportClient getClient() throws UnknownHostException {
         //指定ES集群
-        Settings settings = Settings.builder().put(clusterName, appName).build();
+        Settings settings = Settings.builder().put(SloveHardCount.getClusterName(), SloveHardCount.getAppName()).build();
         //创建访问ES的客户端
-        TransportClient client = new PreBuiltTransportClient(settings).addTransportAddress(new TransportAddress(InetAddress.getByName(inetAddr), clientPort));
+        TransportClient client = new PreBuiltTransportClient(settings).addTransportAddress(new TransportAddress(InetAddress.getByName(SloveHardCount.getInetAddr()), SloveHardCount.getClientPort()));
         return client;
     }
 
@@ -66,6 +64,7 @@ public class TailDaoImpl implements TailDao {
         }
         return map;
     }
+
     //获取所有索引名称返回给前端
     @Override
     public List<String> tailList() throws UnknownHostException {
@@ -77,7 +76,7 @@ public class TailDaoImpl implements TailDao {
 
 
     /**
-     *根据索引名称、开始时间和结束时间进行查询
+     * 根据索引名称、开始时间和结束时间进行查询
      */
     @Override
     public List<SearchHit> selectByTime(IndexDate indexDate) throws UnknownHostException {
@@ -107,6 +106,7 @@ public class TailDaoImpl implements TailDao {
 
     /**
      * 实时查询数据
+     *
      * @param indexes
      * @return
      * @throws UnknownHostException
@@ -140,10 +140,9 @@ public class TailDaoImpl implements TailDao {
 
     /**
      * 异常统计
-     *
      */
     @Override
-    public Map count(ExceptionCount exceptionCount) throws UnknownHostException{
+    public Map count(ExceptionCount exceptionCount) throws UnknownHostException {
         TransportClient client = getClient();
         Map map = new HashMap();
 
@@ -158,7 +157,7 @@ public class TailDaoImpl implements TailDao {
         }
 
         String type = null;
-        if(indexType.equals("1")){
+        if (indexType.equals("1")) {
             type = FieldBean.getType();
         }
 
@@ -177,7 +176,7 @@ public class TailDaoImpl implements TailDao {
         Terms terms = searchResponse.getAggregations().get("by_response");
 
         //循环遍历bucket桶
-        for (Terms.Bucket entry: terms.getBuckets() ){
+        for (Terms.Bucket entry : terms.getBuckets()) {
             map.put(entry.getKey().toString(), entry.getDocCount());
         }
         return map;
@@ -185,10 +184,10 @@ public class TailDaoImpl implements TailDao {
 
 
     /**
-     *慢请求统计0-1秒的请求
+     * 慢请求统计0-1秒的请求
      */
     @Override
-    public Long selectSlowCount1(SlowCountBean slowCountBean) throws UnknownHostException{
+    public Long selectSlowCount1(SlowCountBean slowCountBean) throws UnknownHostException {
 
         TransportClient client = getClient();
         String index = slowCountBean.getIndex();
@@ -203,24 +202,25 @@ public class TailDaoImpl implements TailDao {
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
         //按请求0-1秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(0).to(1000,true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(0).to(1000, true);
 
         //按offset字段进行分组
         AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
 
         SearchResponse sr = client.prepareSearch(indexName).
-                            setQuery(qbTime).
-                            setQuery(qb1).
-                            addAggregation(termsCount).execute().actionGet();
+                setQuery(qbTime).
+                setQuery(qb1).
+                addAggregation(termsCount).execute().actionGet();
         ValueCount valueCount = sr.getAggregations().get("offsetCount");
         Long value1 = valueCount.getValue();
         return value1;
     }
+
     /**
-     *慢请求统计1-2秒的请求
+     * 慢请求统计1-2秒的请求
      */
     @Override
-    public Long selectSlowCount2(SlowCountBean slowCountBean) throws UnknownHostException{
+    public Long selectSlowCount2(SlowCountBean slowCountBean) throws UnknownHostException {
 
         TransportClient client = getClient();
         String index = slowCountBean.getIndex();
@@ -235,7 +235,7 @@ public class TailDaoImpl implements TailDao {
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
         //按请求1-2秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(1001).to(2000,true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(1001).to(2000, true);
 
         //按offset字段进行分组
         AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
@@ -248,11 +248,12 @@ public class TailDaoImpl implements TailDao {
         Long value2 = valueCount.getValue();
         return value2;
     }
+
     /**
-     *慢请求统计2-3秒的请求
+     * 慢请求统计2-3秒的请求
      */
     @Override
-    public Long selectSlowCount3(SlowCountBean slowCountBean) throws UnknownHostException{
+    public Long selectSlowCount3(SlowCountBean slowCountBean) throws UnknownHostException {
 
         TransportClient client = getClient();
         String index = slowCountBean.getIndex();
@@ -267,7 +268,7 @@ public class TailDaoImpl implements TailDao {
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
         //按请求2-3秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(2001).to(3000,true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(2001).to(3000, true);
 
         //按offset字段进行分组
         AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
@@ -280,11 +281,12 @@ public class TailDaoImpl implements TailDao {
         Long value1 = valueCount.getValue();
         return value1;
     }
+
     /**
-     *慢请求统计3-4秒的请求
+     * 慢请求统计3-4秒的请求
      */
     @Override
-    public Long selectSlowCount4(SlowCountBean slowCountBean) throws UnknownHostException{
+    public Long selectSlowCount4(SlowCountBean slowCountBean) throws UnknownHostException {
 
         TransportClient client = getClient();
         String index = slowCountBean.getIndex();
@@ -299,7 +301,7 @@ public class TailDaoImpl implements TailDao {
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
         //按请求3-4秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(3001).to(4000,true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(3001).to(4000, true);
 
         //按offset字段进行分组
         AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
@@ -312,11 +314,12 @@ public class TailDaoImpl implements TailDao {
         Long value1 = valueCount.getValue();
         return value1;
     }
+
     /**
-     *慢请求统计4-5秒的请求
+     * 慢请求统计4-5秒的请求
      */
     @Override
-    public Long selectSlowCount5(SlowCountBean slowCountBean) throws UnknownHostException{
+    public Long selectSlowCount5(SlowCountBean slowCountBean) throws UnknownHostException {
 
         TransportClient client = getClient();
         String index = slowCountBean.getIndex();
@@ -331,7 +334,7 @@ public class TailDaoImpl implements TailDao {
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
         //按请求4-5秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(4001).to(5000,true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(4001).to(5000, true);
 
         //按offset字段进行分组
         AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
@@ -344,11 +347,12 @@ public class TailDaoImpl implements TailDao {
         Long value1 = valueCount.getValue();
         return value1;
     }
+
     /**
-     *慢请求统计5-6秒的请求
+     * 慢请求统计5-6秒的请求
      */
     @Override
-    public Long selectSlowCount6(SlowCountBean slowCountBean) throws UnknownHostException{
+    public Long selectSlowCount6(SlowCountBean slowCountBean) throws UnknownHostException {
 
         TransportClient client = getClient();
         String index = slowCountBean.getIndex();
@@ -363,7 +367,7 @@ public class TailDaoImpl implements TailDao {
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
         //按请求5-6秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(5001).to(6000,true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(5001).to(6000, true);
 
         //按offset字段进行分组
         AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
@@ -379,45 +383,162 @@ public class TailDaoImpl implements TailDao {
 
 
     /**
-     * 根据索引名称查询字段名称和类型
+     * 根据索引名称查询字段名称
      */
     @Override
-    public Map selectFieldMap(String index){
-
+    public List selectFieldsList(String index) {
+        List<String> list = new ArrayList();
+        Indexs indexs;
         ImmutableOpenMap<String, MappingMetaData> mappings;
         String mapping = "";
-        Map mp = new HashMap();
+        String indexName = null;
+
+
+        if (index.equals("0")){
+            try {
+                indexName = tailList().get(0);
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
+        }
         try {
             TransportClient client = getClient();
             mappings = client.admin().cluster()
                     .prepareState().execute().actionGet().getState()
-                    .getMetaData().getIndices().get(index)
+                    .getMetaData().getIndices().get(indexName)
                     .getMappings();
-            mapping = mappings.get(FieldBean.getType()).source().toString();
+            mapping = mappings.get(FieldBean.getElkType()).source().toString();
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
+
         JSONObject jsonObject = JSONObject.fromObject(mapping);
-        String doc = jsonObject.getString(FieldBean.getType());
+        String doc = jsonObject.getString(FieldBean.getElkType());
         JSONObject jsonObject1 = JSONObject.fromObject(doc);
         String properties = jsonObject1.getString(FieldBean.getProperties());
         JSONObject jsonObject2 = JSONObject.fromObject(properties);
-        Map<String,Map<String,String>> map = jsonObject2;
-        for (Map.Entry<String,Map<String,String>> str :map.entrySet()){
-            if (!str.getKey().contains(FieldBean.getTimepstamp())&!str.getKey().contains(FieldBean.getOffset())&!str.getKey().contains(FieldBean.getSource())&!str.getKey().contains(FieldBean.getTags())) {
+        Map<String, Map<String, String>> map = jsonObject2;
+
+        Map mp = new HashMap();
+        for (Map.Entry<String, Map<String, String>> str : map.entrySet()) {
+            if (!str.getKey().contains(FieldBean.getTimepstamp()) & !str.getKey().contains(FieldBean.getOffset()) & !str.getKey().contains(FieldBean.getSource()) & !str.getKey().contains(FieldBean.getTags())) {
                 String key = str.getKey();
-                for (Map.Entry<String,String> ms :str.getValue().entrySet()){
-                    if (ms.getKey().equals(FieldBean.getType())){
-                        mp.put(key, ms.getValue());
+                for (Map.Entry<String, String> ms : str.getValue().entrySet()) {
+                    if (ms.getKey().equals(FieldBean.getType())) {
+                        list.add(key);
+//                        //返回字段明后才能和字段类型
+//                        mp.put(key, ms.getValue());
                     }
                 }
             }
         }
-        return mp;
+        List ls = new ArrayList();
+        for (int i = 0; i < list.size(); i++) {
+            indexs = new Indexs(i, list.get(i));
+            ls.add(indexs);
+        }
+
+        return ls;
     }
 
+    /**
+     * 字段统计
+     */
+    @Override
+    public List fieldsCount(FieldCount fieldCount) {
 
+        TransportClient client = null;
+        Map map = new HashMap();
 
+        try {
+            client = getClient();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+
+        //获取查询条件(从IndexDate类中获取)
+        //此类条件对应的都是id
+        String index = fieldCount.getIndex();
+        String beginTime = fieldCount.getBeginTime();
+        String endTime = fieldCount.getEndTime();
+        int fieldNameId = Integer.parseInt(fieldCount.getFieldNameId());
+
+        //获取字段对应的id
+        List fieldsList = selectFieldsList(index);
+
+        String fieldName = fieldsList.get(fieldNameId).toString();
+
+        //json数组
+        JSONObject querysCondition = fieldCount.getQueryCondition();
+
+        //获取复选框查询条件中的字段
+        String fields;
+        String symbol;
+        int number;
+
+        //按照时间范围进行查询
+        QueryBuilder rangQuery = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
+
+        //使用多条件查询
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery().must(rangQuery);
+
+        for (int i = 0; i < querysCondition.size(); i++) {
+            //按照字段进行条件查询 10 < x < 20
+            fields = querysCondition.get(RequestFieldsBean.getFields()).toString();
+            symbol = querysCondition.get(RequestFieldsBean.getSymbol()).toString();
+            number = Integer.parseInt(querysCondition.get(RequestFieldsBean.getNumber()).toString());
+            QueryBuilder qbEq = null;
+            QueryBuilder qbGt = null;
+            QueryBuilder qbLt = null;
+            QueryBuilder qbLte = null;
+            QueryBuilder qbGte = null;
+
+            if (symbol.equals("1")) {
+                qbEq = QueryBuilders.matchPhraseQuery(fields, number);
+        }
+            if (symbol.equals("2")) {
+                qbGt = QueryBuilders.rangeQuery(fields).gt(number);
+            }
+            if (symbol.equals("3")) {
+                qbLt = QueryBuilders.rangeQuery(fields).lt(number);
+            }
+            if (symbol.equals("4")) {
+                qbLte = QueryBuilders.rangeQuery(fields).lte(number);
+            }
+            if (symbol.equals("5")) {
+                qbGte = QueryBuilders.rangeQuery(fields).gte(number);
+            }
+            boolQuery = boolQuery
+                    .must(qbEq)
+                    .must(qbGt)
+                    .must(qbLt)
+                    .must(qbLte)
+                    .must(qbGte);
+        }
+
+        AggregationBuilder termsBuilder = AggregationBuilders.terms("by_response").field(fieldName);
+
+        SearchResponse searchResponse = client.prepareSearch(index).
+                setQuery(boolQuery).
+                addAggregation(termsBuilder).
+                execute().actionGet();
+
+        Terms terms = searchResponse.getAggregations().get("by_response");
+
+        //循环遍历bucket桶
+        for (Terms.Bucket entry : terms.getBuckets()) {
+            map.put(entry.getKey().toString(), entry.getDocCount());
+        }
+
+        List list = new ArrayList();
+        for (Object key : map.keySet()) {
+            Object value = map.get(key);
+            FieldsCount fst = new FieldsCount(key,value);
+            list.add(fst);
+        }
+
+        return list;
+    }
 
 
 

@@ -6,6 +6,7 @@ import com.ai.platform.util.RequestFieldsBean;
 import com.ai.platform.util.SlowRequestCountBean;
 import com.ai.pojo.*;
 import com.google.gson.Gson;
+import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 import org.elasticsearch.search.SearchHit;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -212,48 +213,44 @@ public class TailController {
     }
 
     /**
-     * 通过索引名称获取所有字段的名称和类型
+     * 通过索引名称获取所有字段的名称(和字段类型)
      */
     @PostMapping(value = "getIndexMetaData")
     @ResponseBody
-    public Map getIndexMetaData(@RequestBody JSONObject jsonObject) {
+    public List getIndexMetaData(@RequestBody JSONObject jsonObject) {
         //获取前端发来的请求携带的参数
         String index = jsonObject.get(RequestFieldsBean.getIndex()).toString();
-        Map fieldMap = tailDao.selectFieldMap(index);
-        return fieldMap;
+        List fieldList = tailDao.selectFieldsList(index);
+        return fieldList;
     }
 
     /**
      * 字段统计
      */
-    @PostMapping(value = "fieldCount")
+    @PostMapping(value = "fieldStatistics")
     @ResponseBody
-    public String fieldsCount() {
+    public List selectFieldCount(@RequestBody JSONObject jsonObject) {
+
         //索引名称
-        String index = null;
+        String index = jsonObject.get(RequestFieldsBean.getIndex()).toString();
         //开始时间
-        String beginTime = null;
+        String beginTime = jsonObject.get(RequestFieldsBean.getBeginTime()).toString();
         //结束时间
-        String endTime = null;
+        String endTime = jsonObject.get(RequestFieldsBean.getEndTime()).toString();
         //字段名称
-        String field = null;
+        String fieldNameId = jsonObject.get(RequestFieldsBean.getField()).toString();
+        //查询条件
+        JSONObject queryCondition = jsonObject.getJSONObject(RequestFieldsBean.getQueryCondition());
+        //分段规则
+        String rule = jsonObject.get(RequestFieldsBean.getRule()).toString();
+
+        FieldCount fieldCount = new FieldCount(index, beginTime, endTime, fieldNameId, queryCondition, rule);
+
+        List fieldsMap = tailDao.fieldsCount(fieldCount);
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-        return null;
+        return fieldsMap;
     }
 
 

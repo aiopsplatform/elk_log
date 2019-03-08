@@ -32,5 +32,9 @@ public interface TailDao {
     Long selectSlowCount6(SlowCountBean slowCountBean) throws UnknownHostException;
 
     //根据索引名称查询字段名称和类型
-    Map selectFieldMap(String index);
+    List selectFieldsList(String index);
+
+    //字段统计
+    List fieldsCount(FieldCount fieldCount);
+
 }
