@@ -6,7 +6,6 @@ import com.ai.platform.util.RequestFieldsBean;
 import com.ai.platform.util.SlowRequestCountBean;
 import com.ai.pojo.*;
 import com.google.gson.Gson;
-import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.elasticsearch.search.SearchHit;
 import org.springframework.beans.factory.annotation.Autowired;

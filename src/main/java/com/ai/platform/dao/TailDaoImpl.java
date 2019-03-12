@@ -66,10 +66,13 @@ public class TailDaoImpl implements TailDao {
 
     //获取所有索引名称返回给前端
     @Override
-    public List<String> tailList() throws UnknownHostException {
-
-        Map map1 = this.getIndex();
-
+    public List<String> tailList() {
+        Map map1 = null;
+        try {
+            map1 = this.getIndex();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
         return new ArrayList<String>(map1.values());
     }
 
@@ -394,10 +397,10 @@ public class TailDaoImpl implements TailDao {
         String indexName = null;
 
 
-        if (index.equals("0")){
+        if (index.equals("0")) {
             try {
                 indexName = tailList().get(0);
-            } catch (UnknownHostException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -448,8 +451,6 @@ public class TailDaoImpl implements TailDao {
     public List fieldsCount(FieldCount fieldCount) {
 
         TransportClient client = null;
-        Map map = new HashMap();
-
         try {
             client = getClient();
         } catch (UnknownHostException e) {
@@ -460,16 +461,16 @@ public class TailDaoImpl implements TailDao {
         //此类条件对应的都是id
         String index = fieldCount.getIndex();
         String indexName = null;
-        if (index.equals("0")){
+        if (index.equals("0")) {
             try {
                 indexName = tailList().get(0);
-            } catch (UnknownHostException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
         String beginTime = fieldCount.getBeginTime();
         String endTime = fieldCount.getEndTime();
-        int fieldNameId =Integer.parseInt(fieldCount.getFieldNameId());
+        int fieldNameId = Integer.parseInt(fieldCount.getFieldNameId());
 
         //获取字段对应的id
         List fieldsList = selectFieldsList(index);
@@ -484,8 +485,8 @@ public class TailDaoImpl implements TailDao {
 
         //json数组
         JSONObject querysCondition = fieldCount.getQueryCondition();
-        if (querysCondition.equals("")){
-            querysCondition=null;
+        if (querysCondition.equals("")) {
+            querysCondition = null;
         }
 
         //获取复选框查询条件中的字段
@@ -495,8 +496,8 @@ public class TailDaoImpl implements TailDao {
 
         //按照时间范围进行查询
         QueryBuilder rangQuery = QueryBuilders
-                        .rangeQuery(FieldBean.getCreatTime())
-                        .from(beginTime).to(endTime);
+                .rangeQuery(FieldBean.getCreatTime())
+                .from(beginTime).to(endTime);
 
         //使用多条件查询
         BoolQueryBuilder boolQuerys = QueryBuilders.boolQuery();
@@ -516,7 +517,7 @@ public class TailDaoImpl implements TailDao {
 
             if (symbol.equals("1")) {
                 qbEq = QueryBuilders.matchPhraseQuery(fields, number);
-        }
+            }
             if (symbol.equals("2")) {
                 qbGt = QueryBuilders.rangeQuery(fields).gt(number);
             }
@@ -538,21 +539,21 @@ public class TailDaoImpl implements TailDao {
         }
 
 
-        //可以用在分段规则上
+//        //可以用在分段规则上
 //        AggregationBuilder agg = AggregationBuilders
 //                .range("range")
 //                .field(fieldName)
 //                .addUnboundedTo().addRange(, ).addUnboundedFrom();
-
-        AggregationBuilder termsCount = AggregationBuilders
-                .terms("count")
-                .field(fieldName);
-
+//
+//
+//        //聚合统计个数
 //        AggregationBuilder arge = AggregationBuilders
 //                .count("aCount")
 //                .field(fieldName);
 
-
+        AggregationBuilder termsCount = AggregationBuilders
+                .terms("count")
+                .field(fieldName);
 
         SearchResponse searchResponse = client.prepareSearch(indexName).
                 setQuery(rangQuery).
@@ -569,11 +570,9 @@ public class TailDaoImpl implements TailDao {
             chartCount = new ChartCount(entry.getKey().toString(), entry.getDocCount());
             list.add(chartCount);
         }
-        //System.out.println(list);
+
         return list;
     }
-
-
 
 
 }
