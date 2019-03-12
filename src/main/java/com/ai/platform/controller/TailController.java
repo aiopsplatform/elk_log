@@ -6,7 +6,6 @@ import com.ai.platform.util.RequestFieldsBean;
 import com.ai.platform.util.SlowRequestCountBean;
 import com.ai.pojo.*;
 import com.google.gson.Gson;
-import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.elasticsearch.search.SearchHit;
@@ -241,17 +240,24 @@ public class TailController {
         //字段名称
         String fieldNameId = jsonObject.get(RequestFieldsBean.getField()).toString();
         //查询条件
-        JSONArray queryCondition = jsonObject.getJSONArray(RequestFieldsBean.getQueryCondition());
+        JSONObject queryCondition = jsonObject.getJSONObject(RequestFieldsBean.getQueryCondition());
+//        if (queryCondition){
+//
+//        }
         //分段规则
-        String rule = jsonObject.get(RequestFieldsBean.getRule()).toString();
+        String rule = null;
+        try {
+            rule = jsonObject.get(RequestFieldsBean.getRule()).toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
         FieldCount fieldCount = new FieldCount(index, beginTime, endTime, fieldNameId, queryCondition, rule);
 
-        List fieldsMap = tailDao.fieldsCount(fieldCount);
+        List fieldsList = tailDao.fieldsCount(fieldCount);
 
-
-
-        return fieldsMap;
+        return fieldsList;
     }
 
 

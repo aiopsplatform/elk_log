@@ -6,6 +6,7 @@ import com.ai.platform.util.FieldBean;
 import com.ai.platform.util.RequestFieldsBean;
 import com.ai.platform.util.SloveHardCount;
 import com.ai.pojo.*;
+import com.google.gson.Gson;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.elasticsearch.action.ActionFuture;
@@ -156,7 +157,7 @@ public class TailDaoImpl implements TailDao {
 
         String type = null;
         if (indexType.equals("1")) {
-            type = FieldBean.getType();
+            type = FieldBean.getElkType();
         }
 
         //按时间进行范围查询
@@ -177,6 +178,7 @@ public class TailDaoImpl implements TailDao {
         for (Terms.Bucket entry : terms.getBuckets()) {
             map.put(entry.getKey().toString(), entry.getDocCount());
         }
+        System.out.println(map);
         return map;
     }
 
@@ -364,7 +366,7 @@ public class TailDaoImpl implements TailDao {
 
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
-        //按请求5-6秒时间进行统计
+        //按请求5-6秒时间进行查询
         QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(5001).to(6000, true);
 
         //按offset字段进行分组
@@ -457,17 +459,34 @@ public class TailDaoImpl implements TailDao {
         //获取查询条件(从IndexDate类中获取)
         //此类条件对应的都是id
         String index = fieldCount.getIndex();
+        String indexName = null;
+        if (index.equals("0")){
+            try {
+                indexName = tailList().get(0);
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
+        }
         String beginTime = fieldCount.getBeginTime();
         String endTime = fieldCount.getEndTime();
-        int fieldNameId = Integer.parseInt(fieldCount.getFieldNameId());
+        int fieldNameId =Integer.parseInt(fieldCount.getFieldNameId());
 
         //获取字段对应的id
         List fieldsList = selectFieldsList(index);
 
-        String fieldName = fieldsList.get(fieldNameId).toString();
+        //根据字段id获取对应的字段名称
+        Gson gson = new Gson();
+        String json = gson.toJson(fieldsList);
+        JSONArray jsonArray = JSONArray.fromObject(json);
+        String s = jsonArray.get(fieldNameId).toString();
+        JSONObject jsonObject = JSONObject.fromObject(s);
+        String fieldName = jsonObject.get("name").toString();
 
         //json数组
-        JSONArray querysCondition = fieldCount.getQueryCondition();
+        JSONObject querysCondition = fieldCount.getQueryCondition();
+        if (querysCondition.equals("")){
+            querysCondition=null;
+        }
 
         //获取复选框查询条件中的字段
         String fields;
@@ -475,16 +494,20 @@ public class TailDaoImpl implements TailDao {
         int number;
 
         //按照时间范围进行查询
-        QueryBuilder rangQuery = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
+        QueryBuilder rangQuery = QueryBuilders
+                        .rangeQuery(FieldBean.getCreatTime())
+                        .from(beginTime).to(endTime);
 
         //使用多条件查询
-        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery().must(rangQuery);
+        BoolQueryBuilder boolQuerys = QueryBuilders.boolQuery();
 
         for (int i = 0; i < querysCondition.size(); i++) {
             //按照字段进行条件查询 10 < x < 20
-            fields = querysCondition.getString(0);
-            symbol = querysCondition.getString(1);
-            number = Integer.parseInt(querysCondition.getString(3));
+            fields = querysCondition.get(RequestFieldsBean.getFields()).toString();
+            symbol = querysCondition.get(RequestFieldsBean.getSymbol()).toString();
+            number = Integer.parseInt(querysCondition
+                    .get(RequestFieldsBean.getNumber())
+                    .toString());
             QueryBuilder qbEq = null;
             QueryBuilder qbGt = null;
             QueryBuilder qbLt = null;
@@ -506,7 +529,7 @@ public class TailDaoImpl implements TailDao {
             if (symbol.equals("5")) {
                 qbGte = QueryBuilders.rangeQuery(fields).gte(number);
             }
-            boolQuery = boolQuery
+            boolQuerys = boolQuerys
                     .must(qbEq)
                     .must(qbGt)
                     .must(qbLt)
@@ -514,27 +537,39 @@ public class TailDaoImpl implements TailDao {
                     .must(qbGte);
         }
 
-        AggregationBuilder termsBuilder = AggregationBuilders.terms("by_response").field(fieldName);
 
-        SearchResponse searchResponse = client.prepareSearch(index).
-                setQuery(boolQuery).
-                addAggregation(termsBuilder).
+        //可以用在分段规则上
+//        AggregationBuilder agg = AggregationBuilders
+//                .range("range")
+//                .field(fieldName)
+//                .addUnboundedTo().addRange(, ).addUnboundedFrom();
+
+        AggregationBuilder termsCount = AggregationBuilders
+                .terms("count")
+                .field(fieldName);
+
+//        AggregationBuilder arge = AggregationBuilders
+//                .count("aCount")
+//                .field(fieldName);
+
+
+
+        SearchResponse searchResponse = client.prepareSearch(indexName).
+                setQuery(rangQuery).
+                setQuery(boolQuerys).
+                addAggregation(termsCount).
                 execute().actionGet();
 
-        Terms terms = searchResponse.getAggregations().get("by_response");
-
-        //循环遍历bucket桶
-        for (Terms.Bucket entry : terms.getBuckets()) {
-            map.put(entry.getKey().toString(), entry.getDocCount());
-        }
+        Terms terms = searchResponse.getAggregations().get("count");
 
         List list = new ArrayList();
-        for (Object key : map.keySet()) {
-            Object value = map.get(key);
-            FieldsCount fst = new FieldsCount(key,value);
-            list.add(fst);
+        ChartCount chartCount;
+        //循环遍历bucket桶
+        for (Terms.Bucket entry : terms.getBuckets()) {
+            chartCount = new ChartCount(entry.getKey().toString(), entry.getDocCount());
+            list.add(chartCount);
         }
-
+        //System.out.println(list);
         return list;
     }
 
