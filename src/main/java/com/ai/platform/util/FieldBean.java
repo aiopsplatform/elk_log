@@ -2,54 +2,54 @@ package com.ai.platform.util;
 
 public class FieldBean {
 
-    private static String elkType = "doc";
-    private static String properties = "properties";
-    private static String timepstamp = "@";
-    private static String offset = "offset";
-    private static String source = "source";
-    private static String tags = "tags";
-    private static String creatTime = "create_time";
-    private static String response = "response";
-    private static String message = "message";
-    private static String type = "type";
+    private static String ELKTYPE = "doc";
+    private static String PROPERTIES = "properties";
+    private static String TIMEPSTAMP = "@";
+    private static String OFFSET = "offset";
+    private static String SOURCE = "source";
+    private static String TAGS = "tags";
+    private static String CREATTIME = "create_time";
+    private static String RESPONSE = "response";
+    private static String MESSAGE = "message";
+    private static String TYPE = "type";
 
-    public static String getElkType() {
-        return elkType;
+    public static String getELKTYPE() {
+        return ELKTYPE;
     }
 
-    public static String getProperties() {
-        return properties;
+    public static String getPROPERTIES() {
+        return PROPERTIES;
     }
 
-    public static String getTimepstamp() {
-        return timepstamp;
+    public static String getTIMEPSTAMP() {
+        return TIMEPSTAMP;
     }
 
-    public static String getOffset() {
-        return offset;
+    public static String getOFFSET() {
+        return OFFSET;
     }
 
-    public static String getSource() {
-        return source;
+    public static String getSOURCE() {
+        return SOURCE;
     }
 
-    public static String getTags() {
-        return tags;
+    public static String getTAGS() {
+        return TAGS;
     }
 
-    public static String getCreatTime() {
-        return creatTime;
+    public static String getCREATTIME() {
+        return CREATTIME;
     }
 
-    public static String getResponse() {
-        return response;
+    public static String getRESPONSE() {
+        return RESPONSE;
     }
 
-    public static String getMessage() {
-        return message;
+    public static String getMESSAGE() {
+        return MESSAGE;
     }
 
-    public static String getType() {
-        return type;
+    public static String getTYPE() {
+        return TYPE;
     }
 }

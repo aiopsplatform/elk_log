@@ -5,59 +5,59 @@ package com.ai.platform.util;
  */
 public class RequestFieldsBean {
 
-    private static String index = "indexes";
-    private static String type = "types";
-    private static String beginTime = "begin_time";
-    private static String endTime = "end_time";
-    private static String field = "field";
-    private static String chartType = "chartType";
-    private static String queryCondition = "queryCondition";
-    private static String rule = "rule";
-    private static String fields = "fields";
-    private static String symbol = "symbol";
-    private static String number = "number";
+    private static String INDEX = "indexes";
+    private static String TYPE = "types";
+    private static String BEGINTIME = "begin_time";
+    private static String ENDTIME = "end_time";
+    private static String FIELD = "field";
+    private static String QUERYCONDITION = "queryCondition";
+    private static String RULE = "rule";
+    private static String FIELDS = "fields";
+    private static String SYMBOL = "symbol";
+    private static String NUMBER = "number";
+    private static String NAME = "name";
 
-    public static String getIndex() {
-        return index;
+    public static String getINDEX() {
+        return INDEX;
     }
 
-    public static String getType() {
-        return type;
+    public static String getTYPE() {
+        return TYPE;
     }
 
-    public static String getBeginTime() {
-        return beginTime;
+    public static String getBEGINTIME() {
+        return BEGINTIME;
     }
 
-    public static String getEndTime() {
-        return endTime;
+    public static String getENDTIME() {
+        return ENDTIME;
     }
 
-    public static String getField() {
-        return field;
+    public static String getFIELD() {
+        return FIELD;
     }
 
-    public static String getChartType() {
-        return chartType;
+    public static String getQUERYCONDITION() {
+        return QUERYCONDITION;
     }
 
-    public static String getQueryCondition() {
-        return queryCondition;
+    public static String getRULE() {
+        return RULE;
     }
 
-    public static String getRule() {
-        return rule;
+    public static String getFIELDS() {
+        return FIELDS;
     }
 
-    public static String getFields() {
-        return fields;
+    public static String getSYMBOL() {
+        return SYMBOL;
     }
 
-    public static String getSymbol() {
-        return symbol;
+    public static String getNUMBER() {
+        return NUMBER;
     }
 
-    public static String getNumber() {
-        return number;
+    public static String getNAME() {
+        return NAME;
     }
 }

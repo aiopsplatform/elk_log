@@ -1,11 +1,12 @@
 package com.ai.platform.controller;
 
-import com.ai.platform.service.TailDao;
+import com.ai.platform.service.TailService;
 import com.ai.platform.util.FieldBean;
 import com.ai.platform.util.RequestFieldsBean;
 import com.ai.platform.util.SlowRequestCountBean;
 import com.ai.pojo.*;
 import com.google.gson.Gson;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.elasticsearch.search.SearchHit;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,13 +22,13 @@ public class TailController {
 
 
     @Autowired
-    private TailDao tailDao;
+    private TailService tailService;
 
     //下拉框，查询所有索引文件的名称
     @GetMapping("/indexAll")
     public String tailList() throws UnknownHostException {
 
-        List ls = tailDao.tailList();
+        List ls = tailService.tailList();
 
         Gson gson = new Gson();
 
@@ -39,31 +40,12 @@ public class TailController {
     }
 
 
-    //使用假索引名称数据返回给前端
-    @GetMapping("/indexList")
-    public String getIndex() {
-        Gson gson = new Gson();
-
-        Index index = new Index(1, "indexlog", "string", "logstash", "logstash");
-        Index index2 = new Index(2, "indexlog2", "string2", "nginx", "nginx");
-        Index index3 = new Index(3, "indexlog3", "string3", "Tomcat", "Tomcat");
-        List ls = new ArrayList();
-        ls.add(index);
-        ls.add(index2);
-        ls.add(index3);
-
-        String st = gson.toJson(ls);
-
-        return st;
-    }
-
-
     //查询ElkLogType
     @GetMapping("/getElkLogType")
     public List getElkLogType() throws UnknownHostException {
         List elkLogTypeList = new ArrayList();
 
-        List list = tailDao.tailList();
+        List list = tailService.tailList();
 
         Indexs indexs = null;
         for (int i = 0; i < list.size(); i++) {
@@ -86,22 +68,22 @@ public class TailController {
 
 
         //解析begin_time和end_time对应的开始时间
-        String start_Time = jsonObject.get(RequestFieldsBean.getBeginTime()).toString();
-        String end_Time = jsonObject.get(RequestFieldsBean.getEndTime()).toString();
+        String start_Time = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
+        String end_Time = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
 
         //解析索引名称对应的id
-        String indexes = jsonObject.get(RequestFieldsBean.getIndex()).toString();
+        String indexes = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
 
         IndexDate indexDate = new IndexDate(indexes, start_Time, end_Time);
 
         //将所有日志存放到list数组中
-        List<SearchHit> selectIndexByTimeList = tailDao.selectByTime(indexDate);
+        List<SearchHit> selectIndexByTimeList = tailService.selectByTime(indexDate);
 
         List list3 = new ArrayList();
 
         //需要将list转换成json格式
         for (SearchHit logMessage : selectIndexByTimeList) {
-            String message = logMessage.getSourceAsMap().get(FieldBean.getMessage()).toString();
+            String message = logMessage.getSourceAsMap().get(FieldBean.getMESSAGE()).toString();
             list3.add(message);
         }
         //将list转换为json格式返回给前端
@@ -122,13 +104,13 @@ public class TailController {
         List realTimeList = new ArrayList();
 
         //解析索引名称对应的id
-        String indexes = jsonObject.get(RequestFieldsBean.getIndex()).toString();
+        String indexes = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
 
-        List<SearchHit> selectRealTime = tailDao.selectRealTimeQuery(indexes);
+        List<SearchHit> selectRealTime = tailService.selectRealTimeQuery(indexes);
 
         //需要将list转换成json格式
         for (SearchHit logMessage : selectRealTime) {
-            String message = logMessage.getSourceAsMap().get(FieldBean.getMessage()).toString();
+            String message = logMessage.getSourceAsMap().get(FieldBean.getMESSAGE()).toString();
             realTimeList.add(message);
         }
         //将list转换为json格式返回给前端
@@ -151,13 +133,13 @@ public class TailController {
          * beginTime -- 开始时间
          * endTime -- 结束时间
          */
-        String indexes = jsonObject.get(RequestFieldsBean.getIndex()).toString();
-        String type = jsonObject.get(RequestFieldsBean.getType()).toString();
-        String beginTime = jsonObject.get(RequestFieldsBean.getBeginTime()).toString();
-        String endTime = jsonObject.get(RequestFieldsBean.getEndTime()).toString();
+        String indexes = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
+        String type = jsonObject.get(RequestFieldsBean.getTYPE()).toString();
+        String beginTime = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
+        String endTime = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
 
         ExceptionCount exceptionCount = new ExceptionCount(indexes, type, beginTime, endTime);
-        Map selectExceptionCount = tailDao.count(exceptionCount);
+        Map selectExceptionCount = tailService.count(exceptionCount);
         List list = new ArrayList();
         for (Object key : selectExceptionCount.keySet()) {
             Object value = selectExceptionCount.get(key);
@@ -176,31 +158,31 @@ public class TailController {
     public List slowCount(@RequestBody JSONObject jsonObject) throws UnknownHostException {
 
         //从请求中获取对应字段的参数
-        String index = jsonObject.get(RequestFieldsBean.getIndex()).toString();
-        String beginTime = jsonObject.get(RequestFieldsBean.getBeginTime()).toString();
-        String endTime = jsonObject.get(RequestFieldsBean.getEndTime()).toString();
+        String index = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
+        String beginTime = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
+        String endTime = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
         List list = new ArrayList();
         SlowCountBean slowCountBean = new SlowCountBean(index, beginTime, endTime);
 
         //统计0-1秒的请求次数
-        Long value1 = tailDao.selectSlowCount1(slowCountBean);
+        Long value1 = tailService.selectSlowCount1(slowCountBean);
         //统计1-2秒的请求次数
-        Long value2 = tailDao.selectSlowCount2(slowCountBean);
+        Long value2 = tailService.selectSlowCount2(slowCountBean);
         //统计2-3秒的请求次数
-        Long value3 = tailDao.selectSlowCount3(slowCountBean);
+        Long value3 = tailService.selectSlowCount3(slowCountBean);
         //统计3-4秒的请求次数
-        Long value4 = tailDao.selectSlowCount4(slowCountBean);
+        Long value4 = tailService.selectSlowCount4(slowCountBean);
         //统计4-5秒的请求次数
-        Long value5 = tailDao.selectSlowCount5(slowCountBean);
+        Long value5 = tailService.selectSlowCount5(slowCountBean);
         //统计5-6秒的请求次数
-        Long value6 = tailDao.selectSlowCount6(slowCountBean);
+        Long value6 = tailService.selectSlowCount6(slowCountBean);
 
-        PartCount partCount1 = new PartCount(SlowRequestCountBean.getOne(), value1);
-        PartCount partCount2 = new PartCount(SlowRequestCountBean.getTwo(), value2);
-        PartCount partCount3 = new PartCount(SlowRequestCountBean.getThree(), value3);
-        PartCount partCount4 = new PartCount(SlowRequestCountBean.getFour(), value4);
-        PartCount partCount5 = new PartCount(SlowRequestCountBean.getFive(), value5);
-        PartCount partCount6 = new PartCount(SlowRequestCountBean.getSix(), value6);
+        PartCount partCount1 = new PartCount(SlowRequestCountBean.getONE(), value1);
+        PartCount partCount2 = new PartCount(SlowRequestCountBean.getTWO(), value2);
+        PartCount partCount3 = new PartCount(SlowRequestCountBean.getTHREE(), value3);
+        PartCount partCount4 = new PartCount(SlowRequestCountBean.getFOUR(), value4);
+        PartCount partCount5 = new PartCount(SlowRequestCountBean.getFIVE(), value5);
+        PartCount partCount6 = new PartCount(SlowRequestCountBean.getSIX(), value6);
         list.add(partCount1);
         list.add(partCount2);
         list.add(partCount3);
@@ -218,8 +200,8 @@ public class TailController {
     @ResponseBody
     public List getIndexMetaData(@RequestBody JSONObject jsonObject) {
         //获取前端发来的请求携带的参数
-        String index = jsonObject.get(RequestFieldsBean.getIndex()).toString();
-        List fieldList = tailDao.selectFieldsList(index);
+        String index = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
+        List fieldList = tailService.selectFieldsList(index);
         return fieldList;
     }
 
@@ -231,22 +213,22 @@ public class TailController {
     public List selectFieldCount(@RequestBody JSONObject jsonObject) {
 
         //索引名称
-        String index = jsonObject.get(RequestFieldsBean.getIndex()).toString();
+        String index = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
         //开始时间
-        String beginTime = jsonObject.get(RequestFieldsBean.getBeginTime()).toString();
+        String beginTime = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
         //结束时间
-        String endTime = jsonObject.get(RequestFieldsBean.getEndTime()).toString();
+        String endTime = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
         //字段名称
-        String fieldNameId = jsonObject.get(RequestFieldsBean.getField()).toString();
+        String fieldNameId = jsonObject.get(RequestFieldsBean.getFIELD()).toString();
         //查询条件
-        JSONObject queryCondition = jsonObject.getJSONObject(RequestFieldsBean.getQueryCondition());
-//        if (queryCondition){
-//
-//        }
+
+        JSONArray queryCondition = (JSONArray) jsonObject.get(RequestFieldsBean.getQUERYCONDITION());
+
+
         //分段规则
         String rule = null;
         try {
-            rule = jsonObject.get(RequestFieldsBean.getRule()).toString();
+            rule = jsonObject.get(RequestFieldsBean.getRULE()).toString();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -254,7 +236,7 @@ public class TailController {
 
         FieldCount fieldCount = new FieldCount(index, beginTime, endTime, fieldNameId, queryCondition, rule);
 
-        List fieldsList = tailDao.fieldsCount(fieldCount);
+        List fieldsList = tailService.fieldsCount(fieldCount);
 
         return fieldsList;
     }

@@ -1,10 +1,11 @@
 package com.ai.platform.dao;
 
 
-import com.ai.platform.service.TailDao;
+import com.ai.platform.service.TailService;
 import com.ai.platform.util.FieldBean;
+import com.ai.platform.util.NumberIdBean;
 import com.ai.platform.util.RequestFieldsBean;
-import com.ai.platform.util.SloveHardCount;
+import com.ai.platform.util.SloveHardCountBean;
 import com.ai.pojo.*;
 import com.google.gson.Gson;
 import net.sf.json.JSONArray;
@@ -37,14 +38,14 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 @Repository
-public class TailDaoImpl implements TailDao {
+public class TailServiceImpl extends RequestFieldsBean implements TailService {
 
     //获取ELK客户端
     public static TransportClient getClient() throws UnknownHostException {
         //指定ES集群
-        Settings settings = Settings.builder().put(SloveHardCount.getClusterName(), SloveHardCount.getAppName()).build();
+        Settings settings = Settings.builder().put(SloveHardCountBean.getClusterName(), SloveHardCountBean.getAPPNAME()).build();
         //创建访问ES的客户端
-        TransportClient client = new PreBuiltTransportClient(settings).addTransportAddress(new TransportAddress(InetAddress.getByName(SloveHardCount.getInetAddr()), SloveHardCount.getClientPort()));
+        TransportClient client = new PreBuiltTransportClient(settings).addTransportAddress(new TransportAddress(InetAddress.getByName(SloveHardCountBean.getINETADDR()), SloveHardCountBean.getCLIENTPORT()));
         return client;
     }
 
@@ -96,7 +97,7 @@ public class TailDaoImpl implements TailDao {
 
         }
 
-        RangeQueryBuilder qb = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(startTime).to(endTime);
+        RangeQueryBuilder qb = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(startTime).to(endTime);
         SearchResponse sr = client.prepareSearch(indexName).setQuery(qb).execute().actionGet();
         SearchHits hits = sr.getHits();
         for (SearchHit hit : hits) {
@@ -129,7 +130,7 @@ public class TailDaoImpl implements TailDao {
         QueryBuilder queryBuilder = QueryBuilders.matchAllQuery();
         SearchResponse searchResponse = client.prepareSearch(indexName).
                 setQuery(queryBuilder).
-                addSort(FieldBean.getCreatTime(), SortOrder.DESC).
+                addSort(FieldBean.getCREATTIME(), SortOrder.DESC).
                 setSize(2).execute().actionGet();
         SearchHits hits = searchResponse.getHits();
         for (SearchHit hit : hits) {
@@ -160,14 +161,14 @@ public class TailDaoImpl implements TailDao {
 
         String type = null;
         if (indexType.equals("1")) {
-            type = FieldBean.getElkType();
+            type = FieldBean.getELKTYPE();
         }
 
         //按时间进行范围查询
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
 
         //按异常进行分组聚合
-        AggregationBuilder termsBuilder = AggregationBuilders.terms("by_response").field(FieldBean.getResponse());
+        AggregationBuilder termsBuilder = AggregationBuilders.terms("by_response").field(FieldBean.getRESPONSE());
 
         SearchResponse searchResponse = client.prepareSearch(indexName).
                 setTypes(type).
@@ -203,12 +204,12 @@ public class TailDaoImpl implements TailDao {
         }
 
         //按时间进行范围查询
-        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
+        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
         //按请求0-1秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(0).to(1000, true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(0).to(1000, true);
 
         //按offset字段进行分组
-        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
+        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOFFSET());
 
         SearchResponse sr = client.prepareSearch(indexName).
                 setQuery(qbTime).
@@ -236,12 +237,12 @@ public class TailDaoImpl implements TailDao {
         }
 
         //按时间进行范围查询
-        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
+        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
         //按请求1-2秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(1001).to(2000, true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(1001).to(2000, true);
 
         //按offset字段进行分组
-        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
+        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOFFSET());
 
         SearchResponse sr = client.prepareSearch(indexName).
                 setQuery(qbTime).
@@ -269,12 +270,12 @@ public class TailDaoImpl implements TailDao {
         }
 
         //按时间进行范围查询
-        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
+        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
         //按请求2-3秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(2001).to(3000, true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(2001).to(3000, true);
 
         //按offset字段进行分组
-        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
+        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOFFSET());
 
         SearchResponse sr = client.prepareSearch(indexName).
                 setQuery(qbTime).
@@ -302,12 +303,12 @@ public class TailDaoImpl implements TailDao {
         }
 
         //按时间进行范围查询
-        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
+        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
         //按请求3-4秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(3001).to(4000, true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(3001).to(4000, true);
 
         //按offset字段进行分组
-        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
+        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOFFSET());
 
         SearchResponse sr = client.prepareSearch(indexName).
                 setQuery(qbTime).
@@ -335,12 +336,12 @@ public class TailDaoImpl implements TailDao {
         }
 
         //按时间进行范围查询
-        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
+        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
         //按请求4-5秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(4001).to(5000, true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(4001).to(5000, true);
 
         //按offset字段进行分组
-        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
+        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOFFSET());
 
         SearchResponse sr = client.prepareSearch(indexName).
                 setQuery(qbTime).
@@ -368,12 +369,12 @@ public class TailDaoImpl implements TailDao {
         }
 
         //按时间进行范围查询
-        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCreatTime()).from(beginTime).to(endTime);
+        QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
         //按请求5-6秒时间进行查询
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOffset()).from(5001).to(6000, true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(5001).to(6000, true);
 
         //按offset字段进行分组
-        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOffset());
+        AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOFFSET());
 
         SearchResponse sr = client.prepareSearch(indexName).
                 setQuery(qbTime).
@@ -410,24 +411,24 @@ public class TailDaoImpl implements TailDao {
                     .prepareState().execute().actionGet().getState()
                     .getMetaData().getIndices().get(indexName)
                     .getMappings();
-            mapping = mappings.get(FieldBean.getElkType()).source().toString();
+            mapping = mappings.get(FieldBean.getELKTYPE()).source().toString();
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
 
         JSONObject jsonObject = JSONObject.fromObject(mapping);
-        String doc = jsonObject.getString(FieldBean.getElkType());
+        String doc = jsonObject.getString(FieldBean.getELKTYPE());
         JSONObject jsonObject1 = JSONObject.fromObject(doc);
-        String properties = jsonObject1.getString(FieldBean.getProperties());
+        String properties = jsonObject1.getString(FieldBean.getPROPERTIES());
         JSONObject jsonObject2 = JSONObject.fromObject(properties);
         Map<String, Map<String, String>> map = jsonObject2;
 
         Map mp = new HashMap();
         for (Map.Entry<String, Map<String, String>> str : map.entrySet()) {
-            if (!str.getKey().contains(FieldBean.getTimepstamp()) & !str.getKey().contains(FieldBean.getOffset()) & !str.getKey().contains(FieldBean.getSource()) & !str.getKey().contains(FieldBean.getTags())) {
+            if (!str.getKey().contains(FieldBean.getTIMEPSTAMP()) & !str.getKey().contains(FieldBean.getOFFSET()) & !str.getKey().contains(FieldBean.getSOURCE()) & !str.getKey().contains(FieldBean.getTAGS())) {
                 String key = str.getKey();
                 for (Map.Entry<String, String> ms : str.getValue().entrySet()) {
-                    if (ms.getKey().equals(FieldBean.getType())) {
+                    if (ms.getKey().equals(FieldBean.getTYPE())) {
                         list.add(key);
 //                        //返回字段明后才能和字段类型
 //                        mp.put(key, ms.getValue());
@@ -459,17 +460,21 @@ public class TailDaoImpl implements TailDao {
 
         //获取查询条件(从IndexDate类中获取)
         //此类条件对应的都是id
+        //?????????
         String index = fieldCount.getIndex();
         String indexName = null;
-        if (index.equals("0")) {
+        if (index.equals(NumberIdBean.getZERO())) {
             try {
-                indexName = tailList().get(0);
+                indexName = tailList().get(Integer.parseInt(NumberIdBean.getZERO()));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+        //获取开始时间
         String beginTime = fieldCount.getBeginTime();
+        //获取结束时间
         String endTime = fieldCount.getEndTime();
+        //获取请求中携带的字段id
         int fieldNameId = Integer.parseInt(fieldCount.getFieldNameId());
 
         //获取字段对应的id
@@ -481,71 +486,87 @@ public class TailDaoImpl implements TailDao {
         JSONArray jsonArray = JSONArray.fromObject(json);
         String s = jsonArray.get(fieldNameId).toString();
         JSONObject jsonObject = JSONObject.fromObject(s);
-        String fieldName = jsonObject.get("name").toString();
+        String fieldName = jsonObject.get(RequestFieldsBean.getNAME()).toString();
 
-        //json数组
-        JSONObject querysCondition = fieldCount.getQueryCondition();
-        if (querysCondition.equals("")) {
-            querysCondition = null;
+        //查询条件为json数组
+        JSONArray querysCondition = fieldCount.getQueryCondition();
+
+        //分段规则为string类型
+        String segmentationRules = fieldCount.getRule();
+        String[] ListsubsectionNumerical = segmentationRules.split("-");
+        for (String val : ListsubsectionNumerical) {
+            String first = val;
+
         }
 
         //获取复选框查询条件中的字段
-        String fields;
+        int fieldsId;
         String symbol;
         int number;
 
         //按照时间范围进行查询
         QueryBuilder rangQuery = QueryBuilders
-                .rangeQuery(FieldBean.getCreatTime())
+                .rangeQuery(FieldBean.getCREATTIME())
                 .from(beginTime).to(endTime);
 
         //使用多条件查询
-        BoolQueryBuilder boolQuerys = QueryBuilders.boolQuery();
+        BoolQueryBuilder blQuerys = QueryBuilders.boolQuery();
+
+        //使用boolQuery中的must().filter()条件
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
 
         for (int i = 0; i < querysCondition.size(); i++) {
             //按照字段进行条件查询 10 < x < 20
-            fields = querysCondition.get(RequestFieldsBean.getFields()).toString();
-            symbol = querysCondition.get(RequestFieldsBean.getSymbol()).toString();
-            number = Integer.parseInt(querysCondition
-                    .get(RequestFieldsBean.getNumber())
-                    .toString());
-            QueryBuilder qbEq = null;
-            QueryBuilder qbGt = null;
-            QueryBuilder qbLt = null;
-            QueryBuilder qbLte = null;
-            QueryBuilder qbGte = null;
+            //得到的为查询条件中的字段所对应的ID值
+            fieldsId = querysCondition.getJSONObject(i).getInt(RequestFieldsBean.getFIELDS());
 
-            if (symbol.equals("1")) {
-                qbEq = QueryBuilders.matchPhraseQuery(fields, number);
+            //通过ID 和 字段对应的ID List来查询实际的字段名称
+            Gson gs = new Gson();
+            String jsonFieldId = gs.toJson(fieldsList);
+            JSONArray jsArray = JSONArray.fromObject(jsonFieldId);
+            String str = jsArray.get(fieldsId).toString();
+            JSONObject jsObject = JSONObject.fromObject(str);
+            String fieldsName = jsObject.get(RequestFieldsBean.getNAME()).toString();
+
+            //得到符号symbol所对应的ID值
+            symbol = querysCondition.getJSONObject(i).getString(RequestFieldsBean.getSYMBOL());
+
+            //得到number 所对应额值
+            number = querysCondition.getJSONObject(i).getInt(RequestFieldsBean.getNUMBER());
+
+
+            QueryBuilder qbSymbol = null;
+
+            if (symbol.equals(NumberIdBean.getZERO())) {
+                qbSymbol = QueryBuilders.termQuery(fieldsName, number);
             }
-            if (symbol.equals("2")) {
-                qbGt = QueryBuilders.rangeQuery(fields).gt(number);
+            if (symbol.equals(NumberIdBean.getONE())) {
+                qbSymbol = QueryBuilders.rangeQuery(fieldsName).lt(number);
             }
-            if (symbol.equals("3")) {
-                qbLt = QueryBuilders.rangeQuery(fields).lt(number);
+            if (symbol.equals(NumberIdBean.getTWO())) {
+                qbSymbol = QueryBuilders.rangeQuery(fieldsName).gt(number);
             }
-            if (symbol.equals("4")) {
-                qbLte = QueryBuilders.rangeQuery(fields).lte(number);
+            if (symbol.equals(NumberIdBean.getTHREE())) {
+                qbSymbol = QueryBuilders.rangeQuery(fieldsName).lte(number);
             }
-            if (symbol.equals("5")) {
-                qbGte = QueryBuilders.rangeQuery(fields).gte(number);
+            if (symbol.equals(NumberIdBean.getFOUR())) {
+                qbSymbol = QueryBuilders.rangeQuery(fieldsName).gte(number);
             }
-            boolQuerys = boolQuerys
-                    .must(qbEq)
-                    .must(qbGt)
-                    .must(qbLt)
-                    .must(qbLte)
-                    .must(qbGte);
+
+            //循环将查询条件添加到boolQuery中
+            blQuerys = blQuerys
+                    .should(qbSymbol);
+            boolQuery.must(rangQuery).filter(blQuerys);
+
         }
 
+        //可以用在分段规则上，按照给定的值进行分段
+        AggregationBuilder res = AggregationBuilders
+                .range("range")
+                .field(fieldName)
+                .addUnboundedTo(100).addRange(100, 300).addRange(300, 500).addUnboundedFrom(500);
 
-//        //可以用在分段规则上
-//        AggregationBuilder agg = AggregationBuilders
-//                .range("range")
-//                .field(fieldName)
-//                .addUnboundedTo().addRange(, ).addUnboundedFrom();
-//
-//
+
 //        //聚合统计个数
 //        AggregationBuilder arge = AggregationBuilders
 //                .count("aCount")
@@ -556,8 +577,7 @@ public class TailDaoImpl implements TailDao {
                 .field(fieldName);
 
         SearchResponse searchResponse = client.prepareSearch(indexName).
-                setQuery(rangQuery).
-                setQuery(boolQuerys).
+                setQuery(boolQuery).
                 addAggregation(termsCount).
                 execute().actionGet();
 
@@ -570,7 +590,6 @@ public class TailDaoImpl implements TailDao {
             chartCount = new ChartCount(entry.getKey().toString(), entry.getDocCount());
             list.add(chartCount);
         }
-
         return list;
     }
 

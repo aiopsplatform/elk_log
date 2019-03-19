@@ -7,7 +7,7 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 
-public interface TailDao {
+public interface TailService {
 
     //获取所有用户的列表
     List<String> tailList() throws UnknownHostException;
