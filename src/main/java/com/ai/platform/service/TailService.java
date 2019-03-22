@@ -25,10 +25,15 @@ public interface TailService {
      * 慢请求统计
      */
     Long selectSlowCount1(SlowCountBean slowCountBean) throws UnknownHostException;
+
     Long selectSlowCount2(SlowCountBean slowCountBean) throws UnknownHostException;
+
     Long selectSlowCount3(SlowCountBean slowCountBean) throws UnknownHostException;
+
     Long selectSlowCount4(SlowCountBean slowCountBean) throws UnknownHostException;
+
     Long selectSlowCount5(SlowCountBean slowCountBean) throws UnknownHostException;
+
     Long selectSlowCount6(SlowCountBean slowCountBean) throws UnknownHostException;
 
     //根据索引名称查询字段名称和类型

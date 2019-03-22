@@ -92,8 +92,8 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         String endTime = indexDate.getEndTime();
 
         String indexName = null;
-        if (indexesName.equals("0")) {
-            indexName = tailList().get(0);
+        if (indexesName.equals(NumberIdBean.getZERO())) {
+            indexName = tailList().get(Integer.parseInt(NumberIdBean.getZERO()));
 
         }
 
@@ -123,8 +123,8 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         //根据前端传来的indexes判断id的值，同时确定indexes的真实索引名称
         String indexName = null;
 
-        if (indexes.equals("0")) {
-            indexName = tailList().get(0);
+        if (indexes.equals(NumberIdBean.getZERO())) {
+            indexName = tailList().get(Integer.parseInt(NumberIdBean.getZERO()));
         }
 
         QueryBuilder queryBuilder = QueryBuilders.matchAllQuery();
@@ -150,19 +150,14 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         Map map = new HashMap();
 
         String indexes = exceptionCount.getIndexName();
-        String indexType = exceptionCount.getIndexType();
         String beginTime = exceptionCount.getBegin_time();
         String endTime = exceptionCount.getEnd_time();
 
         String indexName = null;
-        if (indexes.equals("0")) {
-            indexName = tailList().get(0);
+        if (indexes.equals(NumberIdBean.getZERO())) {
+            indexName = tailList().get(Integer.parseInt(NumberIdBean.getZERO()));
         }
 
-        String type = null;
-        if (indexType.equals("1")) {
-            type = FieldBean.getELKTYPE();
-        }
 
         //按时间进行范围查询
         QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
@@ -171,7 +166,6 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         AggregationBuilder termsBuilder = AggregationBuilders.terms("by_response").field(FieldBean.getRESPONSE());
 
         SearchResponse searchResponse = client.prepareSearch(indexName).
-                setTypes(type).
                 setQuery(qb1).
                 addAggregation(termsBuilder).
                 execute().actionGet();
@@ -182,7 +176,6 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         for (Terms.Bucket entry : terms.getBuckets()) {
             map.put(entry.getKey().toString(), entry.getDocCount());
         }
-        System.out.println(map);
         return map;
     }
 
@@ -199,14 +192,14 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         String endTime = slowCountBean.getEndTime();
 
         String indexName = null;
-        if (index.equals("0")) {
-            indexName = tailList().get(0);
+        if (index.equals(NumberIdBean.getZERO())) {
+            indexName = tailList().get(Integer.parseInt(NumberIdBean.getZERO()));
         }
 
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
         //按请求0-1秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(0).to(1000, true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(Integer.parseInt(NumberIdBean.getZERO())).to(NumberIdBean.getONETHOUSAND(), true);
 
         //按offset字段进行分组
         AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOFFSET());
@@ -232,14 +225,14 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         String endTime = slowCountBean.getEndTime();
 
         String indexName = null;
-        if (index.equals("0")) {
-            indexName = tailList().get(0);
+        if (index.equals(NumberIdBean.getZERO())) {
+            indexName = tailList().get(Integer.parseInt(NumberIdBean.getZERO()));
         }
 
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
         //按请求1-2秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(1001).to(2000, true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(NumberIdBean.getONETHOUSANDONE()).to(NumberIdBean.getTWOTHOUSAND(), true);
 
         //按offset字段进行分组
         AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOFFSET());
@@ -272,7 +265,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
         //按请求2-3秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(2001).to(3000, true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(NumberIdBean.getTWOTHOUSANDONE()).to(NumberIdBean.getTHREETHOUSAND(), true);
 
         //按offset字段进行分组
         AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOFFSET());
@@ -305,7 +298,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
         //按请求3-4秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(3001).to(4000, true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(NumberIdBean.getTHREETHOUSANDONE()).to(NumberIdBean.getFOURTHOUSAND(), true);
 
         //按offset字段进行分组
         AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOFFSET());
@@ -338,7 +331,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
         //按请求4-5秒时间进行统计
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(4001).to(5000, true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(NumberIdBean.getFOURTHOUSANDONE()).to(NumberIdBean.getFIVETHOUSAND(), true);
 
         //按offset字段进行分组
         AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOFFSET());
@@ -371,7 +364,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
         //按请求5-6秒时间进行查询
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(5001).to(6000, true);
+        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getOFFSET()).from(NumberIdBean.getFIVETHOUSANDONE()).to(NumberIdBean.getSIXTHOUSAND(), true);
 
         //按offset字段进行分组
         AggregationBuilder termsCount = AggregationBuilders.count("offsetCount").field(FieldBean.getOFFSET());
@@ -498,6 +491,12 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
             String first = val;
 
         }
+        //可以用在分段规则上，按照给定的值进行分段
+        AggregationBuilder res = AggregationBuilders
+                .range("range")
+                .field(fieldName)
+                .addUnboundedTo(100).addRange(100, 300).addRange(300, 500).addUnboundedFrom(500);
+
 
         //获取复选框查询条件中的字段
         int fieldsId;
@@ -559,12 +558,6 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
             boolQuery.must(rangQuery).filter(blQuerys);
 
         }
-
-        //可以用在分段规则上，按照给定的值进行分段
-        AggregationBuilder res = AggregationBuilders
-                .range("range")
-                .field(fieldName)
-                .addUnboundedTo(100).addRange(100, 300).addRange(300, 500).addUnboundedFrom(500);
 
 
 //        //聚合统计个数

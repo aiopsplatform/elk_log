@@ -12,6 +12,17 @@ public class NumberIdBean {
     private static String SEVEN = "7";
     private static String EIGHT = "8";
     private static String NIGHT = "9";
+    private static Integer ONETHOUSAND = 1000;
+    private static Integer ONETHOUSANDONE = 1001;
+    private static Integer TWOTHOUSAND = 2000;
+    private static Integer TWOTHOUSANDONE = 2001;
+    private static Integer THREETHOUSAND = 3000;
+    private static Integer THREETHOUSANDONE = 3001;
+    private static Integer FOURTHOUSAND = 4000;
+    private static Integer FOURTHOUSANDONE = 4001;
+    private static Integer FIVETHOUSAND = 5000;
+    private static Integer FIVETHOUSANDONE = 5001;
+    private static Integer SIXTHOUSAND = 6000;
 
     public static String getZERO() {
         return ZERO;
@@ -51,5 +62,49 @@ public class NumberIdBean {
 
     public static String getNIGHT() {
         return NIGHT;
+    }
+
+    public static Integer getONETHOUSAND() {
+        return ONETHOUSAND;
+    }
+
+    public static Integer getONETHOUSANDONE() {
+        return ONETHOUSANDONE;
+    }
+
+    public static Integer getTWOTHOUSAND() {
+        return TWOTHOUSAND;
+    }
+
+    public static Integer getTWOTHOUSANDONE() {
+        return TWOTHOUSANDONE;
+    }
+
+    public static Integer getTHREETHOUSAND() {
+        return THREETHOUSAND;
+    }
+
+    public static Integer getTHREETHOUSANDONE() {
+        return THREETHOUSANDONE;
+    }
+
+    public static Integer getFOURTHOUSAND() {
+        return FOURTHOUSAND;
+    }
+
+    public static Integer getFOURTHOUSANDONE() {
+        return FOURTHOUSANDONE;
+    }
+
+    public static Integer getFIVETHOUSAND() {
+        return FIVETHOUSAND;
+    }
+
+    public static Integer getFIVETHOUSANDONE() {
+        return FIVETHOUSANDONE;
+    }
+
+    public static Integer getSIXTHOUSAND() {
+        return SIXTHOUSAND;
     }
 }

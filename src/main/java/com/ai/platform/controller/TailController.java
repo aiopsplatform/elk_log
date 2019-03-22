@@ -129,16 +129,14 @@ public class TailController {
 
         /*
          * indexes -- 索引名称
-         * type -- 索引类型
          * beginTime -- 开始时间
          * endTime -- 结束时间
          */
         String indexes = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
-        String type = jsonObject.get(RequestFieldsBean.getTYPE()).toString();
         String beginTime = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
         String endTime = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
 
-        ExceptionCount exceptionCount = new ExceptionCount(indexes, type, beginTime, endTime);
+        ExceptionCount exceptionCount = new ExceptionCount(indexes, beginTime, endTime);
         Map selectExceptionCount = tailService.count(exceptionCount);
         List list = new ArrayList();
         for (Object key : selectExceptionCount.keySet()) {
