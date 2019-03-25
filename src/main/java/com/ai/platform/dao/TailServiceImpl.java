@@ -2,10 +2,7 @@ package com.ai.platform.dao;
 
 
 import com.ai.platform.service.TailService;
-import com.ai.platform.util.FieldBean;
-import com.ai.platform.util.NumberIdBean;
-import com.ai.platform.util.RequestFieldsBean;
-import com.ai.platform.util.SloveHardCountBean;
+import com.ai.platform.util.*;
 import com.ai.pojo.*;
 import com.google.gson.Gson;
 import net.sf.json.JSONArray;
@@ -19,6 +16,7 @@ import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -29,10 +27,13 @@ import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.springframework.stereotype.Repository;
 
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
@@ -79,31 +80,77 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
 
 
     /**
-     * 根据索引名称、开始时间和结束时间进行查询
+     * 根据索引名称、开始时间和结束时间条件进行查询
      */
     @Override
     public List<SearchHit> selectByTime(IndexDate indexDate) throws UnknownHostException {
 
-        List indexByTimeList = new ArrayList();
+//        List indexByTimeList = new ArrayList();
 
         TransportClient client = getClient();
         String indexesName = indexDate.getIndexes();
         String startTime = indexDate.getStartTime();
         String endTime = indexDate.getEndTime();
 
-        String indexName = null;
-        if (indexesName.equals(NumberIdBean.getZERO())) {
-            indexName = tailList().get(Integer.parseInt(NumberIdBean.getZERO()));
-
+        List list = tailList();
+        List elkLogTypeList = new ArrayList();
+        Indexs indexs;
+        for (int i = 0; i < list.size(); i++) {
+            indexs = new Indexs(i, list.get(i).toString());
+            elkLogTypeList.add(indexs);
         }
+        Gson gson = new Gson();
+        String s1 = gson.toJson(elkLogTypeList);
+        JSONArray jsonArray = JSONArray.fromObject(s1);
+        JSONObject jsonObject = jsonArray.getJSONObject(Integer.parseInt(indexesName));
+        String indexName = jsonObject.get(RequestFieldsBean.getNAME()).toString();
 
         RangeQueryBuilder qb = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(startTime).to(endTime);
-        SearchResponse sr = client.prepareSearch(indexName).setQuery(qb).execute().actionGet();
-        SearchHits hits = sr.getHits();
-        for (SearchHit hit : hits) {
-            indexByTimeList.add(hit);
+        SearchResponse response = client.prepareSearch(indexName)
+                .setQuery(qb)
+                .addSort(SortBuilders.fieldSort("_doc"))
+                .setSize(50).setScroll(new TimeValue(2000)).execute()
+                .actionGet();
+        //获取总数量
+//        long totalCount = response.getHits().getTotalHits();
+//        int page = (int) totalCount / 10;//计算总页数,每次搜索数量为分片数*设置的size大小
+
+//        System.out.println("totalCount:" + totalCount);
+        scrollOutput(response);
+
+        //再次发送请求,并使用上次搜索结果的ScrollId
+        response = client.prepareSearchScroll(response.getScrollId())
+                .setScroll(new TimeValue(20000)).execute()
+                .actionGet();
+        List pageSearchList = scrollOutput(response);
+
+
+//        SearchResponse sr = client.prepareSearch(indexName)
+//                .setQuery(qb)
+//                .setSize(50)
+//                .execute().actionGet();
+//        SearchHits hits = sr.getHits();
+//        for (SearchHit hit : hits) {
+//            indexByTimeList.add(hit);
+//        }
+
+
+
+        return pageSearchList;
+    }
+
+    public List scrollOutput(SearchResponse response) {
+        SearchHits hits = response.getHits();
+        List list = new ArrayList();
+        for (int j = 0; j < hits.getHits().length; j++) {
+            try {
+                String message = hits.getHits()[j].getSourceAsMap().get("message").toString();
+                list.add(message);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-        return indexByTimeList;
+        return list;
     }
 
 
@@ -121,17 +168,24 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         List realTimeList = new ArrayList();
 
         //根据前端传来的indexes判断id的值，同时确定indexes的真实索引名称
-        String indexName = null;
-
-        if (indexes.equals(NumberIdBean.getZERO())) {
-            indexName = tailList().get(Integer.parseInt(NumberIdBean.getZERO()));
+        List list = tailList();
+        List elkLogTypeList = new ArrayList();
+        Indexs indexs;
+        for (int i = 0; i < list.size(); i++) {
+            indexs = new Indexs(i, list.get(i).toString());
+            elkLogTypeList.add(indexs);
         }
+        Gson gson = new Gson();
+        String s1 = gson.toJson(elkLogTypeList);
+        JSONArray jsonArray = JSONArray.fromObject(s1);
+        JSONObject jsonObject = jsonArray.getJSONObject(Integer.parseInt(indexes));
+        String indexName = jsonObject.get(RequestFieldsBean.getNAME()).toString();
 
         QueryBuilder queryBuilder = QueryBuilders.matchAllQuery();
         SearchResponse searchResponse = client.prepareSearch(indexName).
                 setQuery(queryBuilder).
                 addSort(FieldBean.getCREATTIME(), SortOrder.DESC).
-                setSize(2).execute().actionGet();
+                setSize(20).execute().actionGet();
         SearchHits hits = searchResponse.getHits();
         for (SearchHit hit : hits) {
             realTimeList.add(hit);
@@ -153,17 +207,29 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         String beginTime = exceptionCount.getBegin_time();
         String endTime = exceptionCount.getEnd_time();
 
-        String indexName = null;
-        if (indexes.equals(NumberIdBean.getZERO())) {
-            indexName = tailList().get(Integer.parseInt(NumberIdBean.getZERO()));
+        List list = tailList();
+        List elkLogTypeList = new ArrayList();
+        Indexs indexs;
+        for (int i = 0; i < list.size(); i++) {
+            indexs = new Indexs(i, list.get(i).toString());
+            elkLogTypeList.add(indexs);
         }
-
+        Gson gson = new Gson();
+        String s1 = gson.toJson(elkLogTypeList);
+        JSONArray jsonArray = JSONArray.fromObject(s1);
+        JSONObject jsonObject = jsonArray.getJSONObject(Integer.parseInt(indexes));
+        String indexName = jsonObject.get(RequestFieldsBean.getNAME()).toString();
 
         //按时间进行范围查询
-        QueryBuilder qb1 = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
+        QueryBuilder qb1 = QueryBuilders.
+                rangeQuery(FieldBean.getCREATTIME()).
+                from(beginTime).
+                to(endTime);
 
         //按异常进行分组聚合
-        AggregationBuilder termsBuilder = AggregationBuilders.terms("by_response").field(FieldBean.getRESPONSE());
+        AggregationBuilder termsBuilder = AggregationBuilders
+                .terms("by_response")
+                .field(FieldBean.getRESPONSE());
 
         SearchResponse searchResponse = client.prepareSearch(indexName).
                 setQuery(qb1).
@@ -171,11 +237,23 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
                 execute().actionGet();
 
         Terms terms = searchResponse.getAggregations().get("by_response");
-
+        ChartCount chartCount ;
         //循环遍历bucket桶
         for (Terms.Bucket entry : terms.getBuckets()) {
-            map.put(entry.getKey().toString(), entry.getDocCount());
+            map.put(Integer.parseInt(entry.getKey().toString()), entry.getDocCount());
         }
+
+        Iterator<Integer> iterator = map.keySet().iterator();
+        while (iterator.hasNext()) {
+            Integer key = iterator.next();
+            if (key.equals(200)) {
+                iterator.remove();
+            }
+        }
+
+//        for (Object key : map.keySet()) {
+//            System.out.println(key + ":" + map.get(key));
+//        }
         return map;
     }
 
@@ -191,10 +269,18 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         String beginTime = slowCountBean.getStartTime();
         String endTime = slowCountBean.getEndTime();
 
-        String indexName = null;
-        if (index.equals(NumberIdBean.getZERO())) {
-            indexName = tailList().get(Integer.parseInt(NumberIdBean.getZERO()));
+        List list = tailList();
+        List elkLogTypeList = new ArrayList();
+        Indexs indexs;
+        for (int i = 0; i < list.size(); i++) {
+            indexs = new Indexs(i, list.get(i).toString());
+            elkLogTypeList.add(indexs);
         }
+        Gson gson = new Gson();
+        String s1 = gson.toJson(elkLogTypeList);
+        JSONArray jsonArray = JSONArray.fromObject(s1);
+        JSONObject jsonObject = jsonArray.getJSONObject(Integer.parseInt(index));
+        String indexName = jsonObject.get(RequestFieldsBean.getNAME()).toString();
 
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
@@ -224,10 +310,18 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         String beginTime = slowCountBean.getStartTime();
         String endTime = slowCountBean.getEndTime();
 
-        String indexName = null;
-        if (index.equals(NumberIdBean.getZERO())) {
-            indexName = tailList().get(Integer.parseInt(NumberIdBean.getZERO()));
+        List list = tailList();
+        List elkLogTypeList = new ArrayList();
+        Indexs indexs;
+        for (int i = 0; i < list.size(); i++) {
+            indexs = new Indexs(i, list.get(i).toString());
+            elkLogTypeList.add(indexs);
         }
+        Gson gson = new Gson();
+        String s1 = gson.toJson(elkLogTypeList);
+        JSONArray jsonArray = JSONArray.fromObject(s1);
+        JSONObject jsonObject = jsonArray.getJSONObject(Integer.parseInt(index));
+        String indexName = jsonObject.get(RequestFieldsBean.getNAME()).toString();
 
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
@@ -257,10 +351,18 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         String beginTime = slowCountBean.getStartTime();
         String endTime = slowCountBean.getEndTime();
 
-        String indexName = null;
-        if (index.equals("0")) {
-            indexName = tailList().get(0);
+        List list = tailList();
+        List elkLogTypeList = new ArrayList();
+        Indexs indexs;
+        for (int i = 0; i < list.size(); i++) {
+            indexs = new Indexs(i, list.get(i).toString());
+            elkLogTypeList.add(indexs);
         }
+        Gson gson = new Gson();
+        String s1 = gson.toJson(elkLogTypeList);
+        JSONArray jsonArray = JSONArray.fromObject(s1);
+        JSONObject jsonObject = jsonArray.getJSONObject(Integer.parseInt(index));
+        String indexName = jsonObject.get(RequestFieldsBean.getNAME()).toString();
 
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
@@ -290,10 +392,18 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         String beginTime = slowCountBean.getStartTime();
         String endTime = slowCountBean.getEndTime();
 
-        String indexName = null;
-        if (index.equals("0")) {
-            indexName = tailList().get(0);
+        List list = tailList();
+        List elkLogTypeList = new ArrayList();
+        Indexs indexs;
+        for (int i = 0; i < list.size(); i++) {
+            indexs = new Indexs(i, list.get(i).toString());
+            elkLogTypeList.add(indexs);
         }
+        Gson gson = new Gson();
+        String s1 = gson.toJson(elkLogTypeList);
+        JSONArray jsonArray = JSONArray.fromObject(s1);
+        JSONObject jsonObject = jsonArray.getJSONObject(Integer.parseInt(index));
+        String indexName = jsonObject.get(RequestFieldsBean.getNAME()).toString();
 
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
@@ -323,10 +433,18 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         String beginTime = slowCountBean.getStartTime();
         String endTime = slowCountBean.getEndTime();
 
-        String indexName = null;
-        if (index.equals("0")) {
-            indexName = tailList().get(0);
+        List list = tailList();
+        List elkLogTypeList = new ArrayList();
+        Indexs indexs;
+        for (int i = 0; i < list.size(); i++) {
+            indexs = new Indexs(i, list.get(i).toString());
+            elkLogTypeList.add(indexs);
         }
+        Gson gson = new Gson();
+        String s1 = gson.toJson(elkLogTypeList);
+        JSONArray jsonArray = JSONArray.fromObject(s1);
+        JSONObject jsonObject = jsonArray.getJSONObject(Integer.parseInt(index));
+        String indexName = jsonObject.get(RequestFieldsBean.getNAME()).toString();
 
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
@@ -356,10 +474,18 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         String beginTime = slowCountBean.getStartTime();
         String endTime = slowCountBean.getEndTime();
 
-        String indexName = null;
-        if (index.equals("0")) {
-            indexName = tailList().get(0);
+        List list = tailList();
+        List elkLogTypeList = new ArrayList();
+        Indexs indexs;
+        for (int i = 0; i < list.size(); i++) {
+            indexs = new Indexs(i, list.get(i).toString());
+            elkLogTypeList.add(indexs);
         }
+        Gson gson = new Gson();
+        String s1 = gson.toJson(elkLogTypeList);
+        JSONArray jsonArray = JSONArray.fromObject(s1);
+        JSONObject jsonObject = jsonArray.getJSONObject(Integer.parseInt(index));
+        String indexName = jsonObject.get(RequestFieldsBean.getNAME()).toString();
 
         //按时间进行范围查询
         QueryBuilder qbTime = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(beginTime).to(endTime);
@@ -388,16 +514,19 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         Indexs indexs;
         ImmutableOpenMap<String, MappingMetaData> mappings;
         String mapping = "";
-        String indexName = null;
 
-
-        if (index.equals("0")) {
-            try {
-                indexName = tailList().get(0);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        List list1 = tailList();
+        List elkLogTypeList = new ArrayList();
+        for (int i = 0; i < list1.size(); i++) {
+            indexs = new Indexs(i, list1.get(i).toString());
+            elkLogTypeList.add(indexs);
         }
+        Gson gson = new Gson();
+        String s1 = gson.toJson(elkLogTypeList);
+        JSONArray jsonArray = JSONArray.fromObject(s1);
+        JSONObject jsonObjectIndex = jsonArray.getJSONObject(Integer.parseInt(index));
+        String indexName = jsonObjectIndex.get(RequestFieldsBean.getNAME()).toString();
+
         try {
             TransportClient client = getClient();
             mappings = client.admin().cluster()
@@ -417,23 +546,37 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         Map<String, Map<String, String>> map = jsonObject2;
 
         Map mp = new HashMap();
+        String key = null ;
         for (Map.Entry<String, Map<String, String>> str : map.entrySet()) {
             if (!str.getKey().contains(FieldBean.getTIMEPSTAMP()) & !str.getKey().contains(FieldBean.getOFFSET()) & !str.getKey().contains(FieldBean.getSOURCE()) & !str.getKey().contains(FieldBean.getTAGS())) {
-                String key = str.getKey();
+                key = str.getKey();
                 for (Map.Entry<String, String> ms : str.getValue().entrySet()) {
                     if (ms.getKey().equals(FieldBean.getTYPE())) {
                         list.add(key);
-//                        //返回字段明后才能和字段类型
-//                        mp.put(key, ms.getValue());
+//                        //返回字段名称和字段类型
+                        mp.put(key, ms.getValue());
                     }
                 }
             }
         }
         List ls = new ArrayList();
-        for (int i = 0; i < list.size(); i++) {
-            indexs = new Indexs(i, list.get(i));
+
+        int indexOf = list.indexOf(FieldBean.getRESPONSE());
+
+        for (int i = 0; i< 1 ;i++){
+            indexs = new Indexs(i, list.get(indexOf));
             ls.add(indexs);
         }
+
+//        for (int i = 0; i < list.size(); i++) {
+//            indexs = new Indexs(i, list.get(i));
+//            ls.add(indexs);
+//        }
+
+        //写死字段名称只能为response
+//        Indexs indexs1 = new Indexs(0, FieldBean.getRESPONSE());
+//        ls.add(indexs1);
+
 
         return ls;
     }
@@ -455,14 +598,21 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         //此类条件对应的都是id
         //?????????
         String index = fieldCount.getIndex();
-        String indexName = null;
-        if (index.equals(NumberIdBean.getZERO())) {
-            try {
-                indexName = tailList().get(Integer.parseInt(NumberIdBean.getZERO()));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+
+        List listIndex = tailList();
+        List elkLogTypeList = new ArrayList();
+        Indexs indexs;
+        for (int i = 0; i < listIndex.size(); i++) {
+            indexs = new Indexs(i, listIndex.get(i).toString());
+            elkLogTypeList.add(indexs);
         }
+        Gson gsonIndex = new Gson();
+        String s1 = gsonIndex.toJson(elkLogTypeList);
+        JSONArray jsonArrayIndex = JSONArray.fromObject(s1);
+        JSONObject jsonObjectIndex = jsonArrayIndex.getJSONObject(Integer.parseInt(index));
+        String indexName = jsonObjectIndex.get(RequestFieldsBean.getNAME()).toString();
+
+
         //获取开始时间
         String beginTime = fieldCount.getBeginTime();
         //获取结束时间
@@ -485,12 +635,12 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         JSONArray querysCondition = fieldCount.getQueryCondition();
 
         //分段规则为string类型
-        String segmentationRules = fieldCount.getRule();
-        String[] ListsubsectionNumerical = segmentationRules.split("-");
-        for (String val : ListsubsectionNumerical) {
-            String first = val;
-
-        }
+//        String segmentationRules = fieldCount.getRule();
+//        String[] ListsubsectionNumerical = segmentationRules.split("-");
+//        for (String val : ListsubsectionNumerical) {
+//            String first = val;
+//
+//        }
         //可以用在分段规则上，按照给定的值进行分段
         AggregationBuilder res = AggregationBuilders
                 .range("range")

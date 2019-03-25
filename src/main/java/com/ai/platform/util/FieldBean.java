@@ -8,7 +8,7 @@ public class FieldBean {
     private static String OFFSET = "offset";
     private static String SOURCE = "source";
     private static String TAGS = "tags";
-    private static String CREATTIME = "create_time";
+    private static String CREATTIME = "@timestamp";
     private static String RESPONSE = "response";
     private static String MESSAGE = "message";
     private static String TYPE = "type";

@@ -47,8 +47,8 @@ public class TailController {
 
         List list = tailService.tailList();
 
-        Indexs indexs = null;
-        for (int i = 0; i < list.size(); i++) {
+        Indexs indexs;
+        for (int i = 0; i < list.size() - 1; i++) {
             indexs = new Indexs(i, list.get(i).toString());
             elkLogTypeList.add(indexs);
         }
@@ -79,17 +79,26 @@ public class TailController {
         //将所有日志存放到list数组中
         List<SearchHit> selectIndexByTimeList = tailService.selectByTime(indexDate);
 
-        List list3 = new ArrayList();
+//        List list3 = new ArrayList();
 
         //需要将list转换成json格式
-        for (SearchHit logMessage : selectIndexByTimeList) {
-            String message = logMessage.getSourceAsMap().get(FieldBean.getMESSAGE()).toString();
-            list3.add(message);
-        }
+//        for (SearchHit logMessage : selectIndexByTimeList) {
+//            String message = logMessage.getSourceAsMap().get(FieldBean.getMESSAGE()).toString();
+//            list3.add(message);
+//        }
         //将list转换为json格式返回给前端
-        String json = selectGson.toJson(list3);
+        String json = selectGson.toJson(selectIndexByTimeList);
 
         return json;
+    }
+
+    /**
+     * 条件查询中的分页
+     */
+    @PostMapping
+    @ResponseBody
+    public String pageSearch() throws UnknownHostException{
+        return null;
     }
 
 
@@ -137,13 +146,18 @@ public class TailController {
         String endTime = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
 
         ExceptionCount exceptionCount = new ExceptionCount(indexes, beginTime, endTime);
-        Map selectExceptionCount = tailService.count(exceptionCount);
+        Map<Integer,Long> selectExceptionCount = tailService.count(exceptionCount);
         List list = new ArrayList();
-        for (Object key : selectExceptionCount.keySet()) {
-            Object value = selectExceptionCount.get(key);
-            ExceptionValue value1 = new ExceptionValue(key, value);
+        for (Integer key : selectExceptionCount.keySet()) {
+            Long value = selectExceptionCount.get(key);
+
+            ExceptionValue value1 = new ExceptionValue(key , value);
             list.add(value1);
         }
+
+        Collections.sort(list);
+
+
         return list;
     }
 
@@ -235,6 +249,8 @@ public class TailController {
         FieldCount fieldCount = new FieldCount(index, beginTime, endTime, fieldNameId, queryCondition, rule);
 
         List fieldsList = tailService.fieldsCount(fieldCount);
+
+
 
         return fieldsList;
     }
