@@ -16,6 +16,7 @@ public class RequestFieldsBean {
     private static String SYMBOL = "symbol";
     private static String NUMBER = "number";
     private static String NAME = "name";
+    private static String PAGE = "page";
 
     public static String getINDEX() {
         return INDEX;
@@ -59,5 +60,9 @@ public class RequestFieldsBean {
 
     public static String getNAME() {
         return NAME;
+    }
+
+    public static String getPAGE() {
+        return PAGE;
     }
 }

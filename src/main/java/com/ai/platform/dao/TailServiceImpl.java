@@ -16,7 +16,6 @@ import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -27,13 +26,10 @@ import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
-import org.elasticsearch.search.sort.SortBuilder;
-import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.springframework.stereotype.Repository;
 
-import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
@@ -41,12 +37,16 @@ import java.util.*;
 @Repository
 public class TailServiceImpl extends RequestFieldsBean implements TailService {
 
+    public static TransportClient client;
+
     //获取ELK客户端
     public static TransportClient getClient() throws UnknownHostException {
-        //指定ES集群
-        Settings settings = Settings.builder().put(SloveHardCountBean.getClusterName(), SloveHardCountBean.getAPPNAME()).build();
-        //创建访问ES的客户端
-        TransportClient client = new PreBuiltTransportClient(settings).addTransportAddress(new TransportAddress(InetAddress.getByName(SloveHardCountBean.getINETADDR()), SloveHardCountBean.getCLIENTPORT()));
+        if (client == null) {
+            //指定ES集群
+            Settings settings = Settings.builder().put(SloveHardCountBean.getClusterName(), SloveHardCountBean.getAPPNAME()).build();
+            //创建访问ES的客户端
+            client = new PreBuiltTransportClient(settings).addTransportAddress(new TransportAddress(InetAddress.getByName(SloveHardCountBean.getINETADDR()), SloveHardCountBean.getCLIENTPORT()));
+        }
         return client;
     }
 
@@ -91,6 +91,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         String indexesName = indexDate.getIndexes();
         String startTime = indexDate.getStartTime();
         String endTime = indexDate.getEndTime();
+        int page = indexDate.getPage();
 
         List list = tailList();
         List elkLogTypeList = new ArrayList();
@@ -108,23 +109,10 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         RangeQueryBuilder qb = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(startTime).to(endTime);
         SearchResponse response = client.prepareSearch(indexName)
                 .setQuery(qb)
-                .addSort(SortBuilders.fieldSort("_doc"))
-                .setSize(50).setScroll(new TimeValue(2000)).execute()
-                .actionGet();
-        //获取总数量
-//        long totalCount = response.getHits().getTotalHits();
-//        int page = (int) totalCount / 10;//计算总页数,每次搜索数量为分片数*设置的size大小
-
-//        System.out.println("totalCount:" + totalCount);
-        scrollOutput(response);
-
-        //再次发送请求,并使用上次搜索结果的ScrollId
-        response = client.prepareSearchScroll(response.getScrollId())
-                .setScroll(new TimeValue(20000)).execute()
-                .actionGet();
+                .setFrom(20 * (page - 1))
+                .setSize(20)
+                .execute().actionGet();
         List pageSearchList = scrollOutput(response);
-
-
 //        SearchResponse sr = client.prepareSearch(indexName)
 //                .setQuery(qb)
 //                .setSize(50)
@@ -133,9 +121,6 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
 //        for (SearchHit hit : hits) {
 //            indexByTimeList.add(hit);
 //        }
-
-
-
         return pageSearchList;
     }
 
@@ -237,7 +222,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
                 execute().actionGet();
 
         Terms terms = searchResponse.getAggregations().get("by_response");
-        ChartCount chartCount ;
+        ChartCount chartCount;
         //循环遍历bucket桶
         for (Terms.Bucket entry : terms.getBuckets()) {
             map.put(Integer.parseInt(entry.getKey().toString()), entry.getDocCount());
@@ -546,7 +531,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         Map<String, Map<String, String>> map = jsonObject2;
 
         Map mp = new HashMap();
-        String key = null ;
+        String key = null;
         for (Map.Entry<String, Map<String, String>> str : map.entrySet()) {
             if (!str.getKey().contains(FieldBean.getTIMEPSTAMP()) & !str.getKey().contains(FieldBean.getOFFSET()) & !str.getKey().contains(FieldBean.getSOURCE()) & !str.getKey().contains(FieldBean.getTAGS())) {
                 key = str.getKey();
@@ -563,7 +548,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
 
         int indexOf = list.indexOf(FieldBean.getRESPONSE());
 
-        for (int i = 0; i< 1 ;i++){
+        for (int i = 0; i < 1; i++) {
             indexs = new Indexs(i, list.get(indexOf));
             ls.add(indexs);
         }
@@ -596,9 +581,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
 
         //获取查询条件(从IndexDate类中获取)
         //此类条件对应的都是id
-        //?????????
         String index = fieldCount.getIndex();
-
         List listIndex = tailList();
         List elkLogTypeList = new ArrayList();
         Indexs indexs;
@@ -611,7 +594,6 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         JSONArray jsonArrayIndex = JSONArray.fromObject(s1);
         JSONObject jsonObjectIndex = jsonArrayIndex.getJSONObject(Integer.parseInt(index));
         String indexName = jsonObjectIndex.get(RequestFieldsBean.getNAME()).toString();
-
 
         //获取开始时间
         String beginTime = fieldCount.getBeginTime();
@@ -664,51 +646,6 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         //使用boolQuery中的must().filter()条件
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
 
-        for (int i = 0; i < querysCondition.size(); i++) {
-            //按照字段进行条件查询 10 < x < 20
-            //得到的为查询条件中的字段所对应的ID值
-            fieldsId = querysCondition.getJSONObject(i).getInt(RequestFieldsBean.getFIELDS());
-
-            //通过ID 和 字段对应的ID List来查询实际的字段名称
-            Gson gs = new Gson();
-            String jsonFieldId = gs.toJson(fieldsList);
-            JSONArray jsArray = JSONArray.fromObject(jsonFieldId);
-            String str = jsArray.get(fieldsId).toString();
-            JSONObject jsObject = JSONObject.fromObject(str);
-            String fieldsName = jsObject.get(RequestFieldsBean.getNAME()).toString();
-
-            //得到符号symbol所对应的ID值
-            symbol = querysCondition.getJSONObject(i).getString(RequestFieldsBean.getSYMBOL());
-
-            //得到number 所对应额值
-            number = querysCondition.getJSONObject(i).getInt(RequestFieldsBean.getNUMBER());
-
-
-            QueryBuilder qbSymbol = null;
-
-            if (symbol.equals(NumberIdBean.getZERO())) {
-                qbSymbol = QueryBuilders.termQuery(fieldsName, number);
-            }
-            if (symbol.equals(NumberIdBean.getONE())) {
-                qbSymbol = QueryBuilders.rangeQuery(fieldsName).lt(number);
-            }
-            if (symbol.equals(NumberIdBean.getTWO())) {
-                qbSymbol = QueryBuilders.rangeQuery(fieldsName).gt(number);
-            }
-            if (symbol.equals(NumberIdBean.getTHREE())) {
-                qbSymbol = QueryBuilders.rangeQuery(fieldsName).lte(number);
-            }
-            if (symbol.equals(NumberIdBean.getFOUR())) {
-                qbSymbol = QueryBuilders.rangeQuery(fieldsName).gte(number);
-            }
-
-            //循环将查询条件添加到boolQuery中
-            blQuerys = blQuerys
-                    .should(qbSymbol);
-            boolQuery.must(rangQuery).filter(blQuerys);
-
-        }
-
 
 //        //聚合统计个数
 //        AggregationBuilder arge = AggregationBuilders
@@ -719,10 +656,64 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
                 .terms("count")
                 .field(fieldName);
 
-        SearchResponse searchResponse = client.prepareSearch(indexName).
-                setQuery(boolQuery).
-                addAggregation(termsCount).
-                execute().actionGet();
+        SearchResponse searchResponse ;
+
+        if (querysCondition == null) {
+            searchResponse = client.prepareSearch(indexName).
+                    setQuery(rangQuery).
+                    addAggregation(termsCount).
+                    execute().actionGet();
+        } else {
+            for (int i = 0; i < querysCondition.size(); i++) {
+                //按照字段进行条件查询 10 < x < 20
+                //得到的为查询条件中的字段所对应的ID值
+                fieldsId = querysCondition.getJSONObject(i).getInt(RequestFieldsBean.getFIELDS());
+
+                //通过ID 和 字段对应的ID List来查询实际的字段名称
+                Gson gs = new Gson();
+                String jsonFieldId = gs.toJson(fieldsList);
+                JSONArray jsArray = JSONArray.fromObject(jsonFieldId);
+                String str = jsArray.get(fieldsId).toString();
+                JSONObject jsObject = JSONObject.fromObject(str);
+                String fieldsName = jsObject.get(RequestFieldsBean.getNAME()).toString();
+
+                //得到符号symbol所对应的ID值
+                symbol = querysCondition.getJSONObject(i).getString(RequestFieldsBean.getSYMBOL());
+
+                //得到number 所对应额值
+                number = querysCondition.getJSONObject(i).getInt(RequestFieldsBean.getNUMBER());
+
+
+                QueryBuilder qbSymbol = null;
+
+                if (symbol.equals(NumberIdBean.getZERO())) {
+                    qbSymbol = QueryBuilders.termQuery(fieldsName, number);
+                }
+                if (symbol.equals(NumberIdBean.getONE())) {
+                    qbSymbol = QueryBuilders.rangeQuery(fieldsName).lt(number);
+                }
+                if (symbol.equals(NumberIdBean.getTWO())) {
+                    qbSymbol = QueryBuilders.rangeQuery(fieldsName).gt(number);
+                }
+                if (symbol.equals(NumberIdBean.getTHREE())) {
+                    qbSymbol = QueryBuilders.rangeQuery(fieldsName).lte(number);
+                }
+                if (symbol.equals(NumberIdBean.getFOUR())) {
+                    qbSymbol = QueryBuilders.rangeQuery(fieldsName).gte(number);
+                }
+
+                //循环将查询条件添加到boolQuery中
+                blQuerys = blQuerys
+                        .should(qbSymbol);
+                boolQuery.must(rangQuery).filter(blQuerys);
+
+            }
+            searchResponse = client.prepareSearch(indexName).
+                    setQuery(boolQuery).
+                    addAggregation(termsCount).
+                    execute().actionGet();
+        }
+
 
         Terms terms = searchResponse.getAggregations().get("count");
 
@@ -735,6 +726,5 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         }
         return list;
     }
-
 
 }

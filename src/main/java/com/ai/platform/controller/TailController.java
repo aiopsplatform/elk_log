@@ -48,7 +48,7 @@ public class TailController {
         List list = tailService.tailList();
 
         Indexs indexs;
-        for (int i = 0; i < list.size() - 1; i++) {
+        for (int i = 0; i < list.size() - 2; i++) {
             indexs = new Indexs(i, list.get(i).toString());
             elkLogTypeList.add(indexs);
         }
@@ -66,28 +66,26 @@ public class TailController {
 
         Gson selectGson = new Gson();
 
+        System.out.println(jsonObject);
 
         //解析begin_time和end_time对应的开始时间
         String start_Time = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
         String end_Time = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
+        int page = Integer.parseInt(jsonObject.get(RequestFieldsBean.getPAGE()).toString());
 
         //解析索引名称对应的id
         String indexes = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
 
-        IndexDate indexDate = new IndexDate(indexes, start_Time, end_Time);
+        IndexDate indexDate = new IndexDate(indexes, start_Time, end_Time , page);
 
         //将所有日志存放到list数组中
         List<SearchHit> selectIndexByTimeList = tailService.selectByTime(indexDate);
 
-//        List list3 = new ArrayList();
-
-        //需要将list转换成json格式
-//        for (SearchHit logMessage : selectIndexByTimeList) {
-//            String message = logMessage.getSourceAsMap().get(FieldBean.getMESSAGE()).toString();
-//            list3.add(message);
-//        }
         //将list转换为json格式返回给前端
         String json = selectGson.toJson(selectIndexByTimeList);
+
+
+        System.out.println(json);
 
         return json;
     }
@@ -97,7 +95,7 @@ public class TailController {
      */
     @PostMapping
     @ResponseBody
-    public String pageSearch() throws UnknownHostException{
+    public String pageSearch() throws UnknownHostException {
         return null;
     }
 
@@ -146,12 +144,12 @@ public class TailController {
         String endTime = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
 
         ExceptionCount exceptionCount = new ExceptionCount(indexes, beginTime, endTime);
-        Map<Integer,Long> selectExceptionCount = tailService.count(exceptionCount);
+        Map<Integer, Long> selectExceptionCount = tailService.count(exceptionCount);
         List list = new ArrayList();
         for (Integer key : selectExceptionCount.keySet()) {
             Long value = selectExceptionCount.get(key);
 
-            ExceptionValue value1 = new ExceptionValue(key , value);
+            ExceptionValue value1 = new ExceptionValue(key, value);
             list.add(value1);
         }
 
@@ -224,6 +222,8 @@ public class TailController {
     @ResponseBody
     public List selectFieldCount(@RequestBody JSONObject jsonObject) {
 
+        System.out.println(jsonObject);
+
         //索引名称
         String index = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
         //开始时间
@@ -250,7 +250,7 @@ public class TailController {
 
         List fieldsList = tailService.fieldsCount(fieldCount);
 
-
+        System.out.println(fieldsList);
 
         return fieldsList;
     }

@@ -5,11 +5,13 @@ public class IndexDate {
     private String indexes;
     private String startTime;
     private String endTime;
+    private int page;
 
-    public IndexDate(String indexes, String startTime, String endTime) {
+    public IndexDate(String indexes, String startTime, String endTime, int page) {
         this.indexes = indexes;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.page = page;
     }
 
     public String getIndexes() {
@@ -34,5 +36,13 @@ public class IndexDate {
 
     public void setEndTime(String endTime) {
         this.endTime = endTime;
+    }
+
+    public int getPage() {
+        return page;
+    }
+
+    public void setPage(int page) {
+        this.page = page;
     }
 }
