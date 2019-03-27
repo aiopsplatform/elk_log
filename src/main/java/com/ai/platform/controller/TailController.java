@@ -47,12 +47,14 @@ public class TailController {
 
         List list = tailService.tailList();
 
-        Indexs indexs;
-        System.out.println(list.size());
-        System.out.println(list);
+        Indexs indexs ;
+//        System.out.println(list.size());
+//        System.out.println(list);
         for (int i = 0; i < list.size() - 3; i++) {
-            indexs = new Indexs(i, list.get(i).toString());
-            elkLogTypeList.add(indexs);
+            if (list.get(i).toString().contains("nginx")){
+                indexs = new Indexs(i, list.get(i).toString(),"Nginx日志");
+                elkLogTypeList.add(indexs);
+            }
         }
 
         return elkLogTypeList;
@@ -224,7 +226,7 @@ public class TailController {
     @ResponseBody
     public List selectFieldCount(@RequestBody JSONObject jsonObject) {
 
-        System.out.println(jsonObject);
+//        System.out.println(jsonObject);
 
         //索引名称
         String index = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
@@ -252,7 +254,7 @@ public class TailController {
 
         List fieldsList = tailService.fieldsCount(fieldCount);
 
-        System.out.println(fieldsList);
+//        System.out.println(fieldsList);
 
         return fieldsList;
     }

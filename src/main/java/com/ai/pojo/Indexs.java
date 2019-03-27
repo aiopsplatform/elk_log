@@ -6,9 +6,12 @@ public class Indexs {
 
     private String name;
 
-    public Indexs(Integer id, String name) {
+    private String describe;
+
+    public Indexs(Integer id, String name, String describe) {
         this.id = id;
         this.name = name;
+        this.describe = describe;
     }
 
     public Integer getId() {
@@ -25,5 +28,13 @@ public class Indexs {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDescribe() {
+        return describe;
+    }
+
+    public void setDescribe(String describe) {
+        this.describe = describe;
     }
 }

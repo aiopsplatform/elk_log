@@ -97,7 +97,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         List elkLogTypeList = new ArrayList();
         Indexs indexs;
         for (int i = 0; i < list.size(); i++) {
-            indexs = new Indexs(i, list.get(i).toString());
+            indexs = new Indexs(i, list.get(i).toString(),"");
             elkLogTypeList.add(indexs);
         }
         Gson gson = new Gson();
@@ -157,7 +157,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         List elkLogTypeList = new ArrayList();
         Indexs indexs;
         for (int i = 0; i < list.size(); i++) {
-            indexs = new Indexs(i, list.get(i).toString());
+            indexs = new Indexs(i, list.get(i).toString(),"");
             elkLogTypeList.add(indexs);
         }
         Gson gson = new Gson();
@@ -196,7 +196,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         List elkLogTypeList = new ArrayList();
         Indexs indexs;
         for (int i = 0; i < list.size(); i++) {
-            indexs = new Indexs(i, list.get(i).toString());
+            indexs = new Indexs(i, list.get(i).toString(),"");
             elkLogTypeList.add(indexs);
         }
         Gson gson = new Gson();
@@ -258,7 +258,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         List elkLogTypeList = new ArrayList();
         Indexs indexs;
         for (int i = 0; i < list.size(); i++) {
-            indexs = new Indexs(i, list.get(i).toString());
+            indexs = new Indexs(i, list.get(i).toString(),"");
             elkLogTypeList.add(indexs);
         }
         Gson gson = new Gson();
@@ -299,7 +299,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         List elkLogTypeList = new ArrayList();
         Indexs indexs;
         for (int i = 0; i < list.size(); i++) {
-            indexs = new Indexs(i, list.get(i).toString());
+            indexs = new Indexs(i, list.get(i).toString(),"");
             elkLogTypeList.add(indexs);
         }
         Gson gson = new Gson();
@@ -340,7 +340,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         List elkLogTypeList = new ArrayList();
         Indexs indexs;
         for (int i = 0; i < list.size(); i++) {
-            indexs = new Indexs(i, list.get(i).toString());
+            indexs = new Indexs(i, list.get(i).toString(),"");
             elkLogTypeList.add(indexs);
         }
         Gson gson = new Gson();
@@ -381,7 +381,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         List elkLogTypeList = new ArrayList();
         Indexs indexs;
         for (int i = 0; i < list.size(); i++) {
-            indexs = new Indexs(i, list.get(i).toString());
+            indexs = new Indexs(i, list.get(i).toString(),"");
             elkLogTypeList.add(indexs);
         }
         Gson gson = new Gson();
@@ -422,7 +422,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         List elkLogTypeList = new ArrayList();
         Indexs indexs;
         for (int i = 0; i < list.size(); i++) {
-            indexs = new Indexs(i, list.get(i).toString());
+            indexs = new Indexs(i, list.get(i).toString(),"");
             elkLogTypeList.add(indexs);
         }
         Gson gson = new Gson();
@@ -463,7 +463,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         List elkLogTypeList = new ArrayList();
         Indexs indexs;
         for (int i = 0; i < list.size(); i++) {
-            indexs = new Indexs(i, list.get(i).toString());
+            indexs = new Indexs(i, list.get(i).toString(),"");
             elkLogTypeList.add(indexs);
         }
         Gson gson = new Gson();
@@ -503,7 +503,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         List list1 = tailList();
         List elkLogTypeList = new ArrayList();
         for (int i = 0; i < list1.size(); i++) {
-            indexs = new Indexs(i, list1.get(i).toString());
+            indexs = new Indexs(i, list1.get(i).toString(),"");
             elkLogTypeList.add(indexs);
         }
         Gson gson = new Gson();
@@ -549,7 +549,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         int indexOf = list.indexOf(FieldBean.getRESPONSE());
 
         for (int i = 0; i < 1; i++) {
-            indexs = new Indexs(i, list.get(indexOf));
+            indexs = new Indexs(i, list.get(indexOf),"");
             ls.add(indexs);
         }
 
@@ -586,7 +586,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         List elkLogTypeList = new ArrayList();
         Indexs indexs;
         for (int i = 0; i < listIndex.size(); i++) {
-            indexs = new Indexs(i, listIndex.get(i).toString());
+            indexs = new Indexs(i, listIndex.get(i).toString(),"");
             elkLogTypeList.add(indexs);
         }
         Gson gsonIndex = new Gson();
