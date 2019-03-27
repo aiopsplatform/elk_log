@@ -48,7 +48,9 @@ public class TailController {
         List list = tailService.tailList();
 
         Indexs indexs;
-        for (int i = 0; i < list.size() - 2; i++) {
+        System.out.println(list.size());
+        System.out.println(list);
+        for (int i = 0; i < list.size() - 3; i++) {
             indexs = new Indexs(i, list.get(i).toString());
             elkLogTypeList.add(indexs);
         }
@@ -66,7 +68,7 @@ public class TailController {
 
         Gson selectGson = new Gson();
 
-        System.out.println(jsonObject);
+//        System.out.println(jsonObject);
 
         //解析begin_time和end_time对应的开始时间
         String start_Time = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
@@ -85,7 +87,7 @@ public class TailController {
         String json = selectGson.toJson(selectIndexByTimeList);
 
 
-        System.out.println(json);
+//        System.out.println(json);
 
         return json;
     }

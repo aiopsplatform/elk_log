@@ -43,7 +43,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
     public static TransportClient getClient() throws UnknownHostException {
         if (client == null) {
             //指定ES集群
-            Settings settings = Settings.builder().put(SloveHardCountBean.getClusterName(), SloveHardCountBean.getAPPNAME()).build();
+            Settings settings = Settings.builder().put(SloveHardCountBean.getClusterName(), SloveHardCountBean.getAPPNAME()).put("client.transport.sniff", true).build();
             //创建访问ES的客户端
             client = new PreBuiltTransportClient(settings).addTransportAddress(new TransportAddress(InetAddress.getByName(SloveHardCountBean.getINETADDR()), SloveHardCountBean.getCLIENTPORT()));
         }
@@ -655,6 +655,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         AggregationBuilder termsCount = AggregationBuilders
                 .terms("count")
                 .field(fieldName);
+
 
         SearchResponse searchResponse ;
 
