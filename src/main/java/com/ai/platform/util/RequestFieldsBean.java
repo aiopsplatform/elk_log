@@ -17,6 +17,7 @@ public class RequestFieldsBean {
     private static String NUMBER = "number";
     private static String NAME = "name";
     private static String PAGE = "page";
+    private static String KEYWORD = "keyword";
 
     public static String getINDEX() {
         return INDEX;
@@ -64,5 +65,9 @@ public class RequestFieldsBean {
 
     public static String getPAGE() {
         return PAGE;
+    }
+
+    public static String getKEYWORD() {
+        return KEYWORD;
     }
 }

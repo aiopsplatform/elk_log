@@ -52,8 +52,13 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
 
 
     //查询ES中所有的索引
-    private Map<Integer, String> getIndex() throws UnknownHostException {
-        TransportClient client = getClient();
+    private Map<Integer, String> getIndex(){
+        TransportClient client = null;
+        try {
+            client = getClient();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
         ActionFuture<IndicesStatsResponse> isr = client.admin().indices().stats(new IndicesStatsRequest().all());
         Set<String> set = isr.actionGet().getIndices().keySet();
 
@@ -69,12 +74,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
     //获取所有索引名称返回给前端
     @Override
     public List<String> tailList() {
-        Map map1 = null;
-        try {
-            map1 = this.getIndex();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+        Map map1 = this.getIndex();
         return new ArrayList<String>(map1.values());
     }
 
@@ -83,11 +83,8 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
      * 根据索引名称、开始时间和结束时间条件进行查询
      */
     @Override
-    public List<SearchHit> selectByTime(IndexDate indexDate) throws UnknownHostException {
+    public List<SearchHit> selectByTime(IndexDate indexDate){
 
-//        List indexByTimeList = new ArrayList();
-
-        TransportClient client = getClient();
         String indexesName = indexDate.getIndexes();
         String startTime = indexDate.getStartTime();
         String endTime = indexDate.getEndTime();
@@ -129,7 +126,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         List list = new ArrayList();
         for (int j = 0; j < hits.getHits().length; j++) {
             try {
-                String message = hits.getHits()[j].getSourceAsMap().get("message").toString();
+                String message = hits.getHits()[j].getSourceAsMap().get(FieldBean.getMESSAGE()).toString();
                 list.add(message);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -141,15 +138,12 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
 
     /**
      * 实时查询数据
-     *
      * @param indexes
      * @return
-     * @throws UnknownHostException
      */
     @Override
-    public List<SearchHit> selectRealTimeQuery(String indexes) throws UnknownHostException {
+    public List<SearchHit> selectRealTimeQuery(String indexes){
 
-        TransportClient client = getClient();
         List realTimeList = new ArrayList();
 
         //根据前端传来的indexes判断id的值，同时确定indexes的真实索引名称
@@ -184,8 +178,7 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
      * 异常统计
      */
     @Override
-    public Map count(ExceptionCount exceptionCount) throws UnknownHostException {
-        TransportClient client = getClient();
+    public Map count(ExceptionCount exceptionCount){
         Map map = new HashMap();
 
         String indexes = exceptionCount.getIndexName();
@@ -247,9 +240,8 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
      * 慢请求统计0-1秒的请求
      */
     @Override
-    public Long selectSlowCount1(SlowCountBean slowCountBean) throws UnknownHostException {
+    public Long selectSlowCount1(SlowCountBean slowCountBean){
 
-        TransportClient client = getClient();
         String index = slowCountBean.getIndex();
         String beginTime = slowCountBean.getStartTime();
         String endTime = slowCountBean.getEndTime();
@@ -288,9 +280,8 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
      * 慢请求统计1-2秒的请求
      */
     @Override
-    public Long selectSlowCount2(SlowCountBean slowCountBean) throws UnknownHostException {
+    public Long selectSlowCount2(SlowCountBean slowCountBean){
 
-        TransportClient client = getClient();
         String index = slowCountBean.getIndex();
         String beginTime = slowCountBean.getStartTime();
         String endTime = slowCountBean.getEndTime();
@@ -329,9 +320,8 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
      * 慢请求统计2-3秒的请求
      */
     @Override
-    public Long selectSlowCount3(SlowCountBean slowCountBean) throws UnknownHostException {
+    public Long selectSlowCount3(SlowCountBean slowCountBean){
 
-        TransportClient client = getClient();
         String index = slowCountBean.getIndex();
         String beginTime = slowCountBean.getStartTime();
         String endTime = slowCountBean.getEndTime();
@@ -370,9 +360,8 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
      * 慢请求统计3-4秒的请求
      */
     @Override
-    public Long selectSlowCount4(SlowCountBean slowCountBean) throws UnknownHostException {
+    public Long selectSlowCount4(SlowCountBean slowCountBean){
 
-        TransportClient client = getClient();
         String index = slowCountBean.getIndex();
         String beginTime = slowCountBean.getStartTime();
         String endTime = slowCountBean.getEndTime();
@@ -411,9 +400,8 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
      * 慢请求统计4-5秒的请求
      */
     @Override
-    public Long selectSlowCount5(SlowCountBean slowCountBean) throws UnknownHostException {
+    public Long selectSlowCount5(SlowCountBean slowCountBean){
 
-        TransportClient client = getClient();
         String index = slowCountBean.getIndex();
         String beginTime = slowCountBean.getStartTime();
         String endTime = slowCountBean.getEndTime();
@@ -452,9 +440,8 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
      * 慢请求统计5-6秒的请求
      */
     @Override
-    public Long selectSlowCount6(SlowCountBean slowCountBean) throws UnknownHostException {
+    public Long selectSlowCount6(SlowCountBean slowCountBean){
 
-        TransportClient client = getClient();
         String index = slowCountBean.getIndex();
         String beginTime = slowCountBean.getStartTime();
         String endTime = slowCountBean.getEndTime();
@@ -571,13 +558,6 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
      */
     @Override
     public List fieldsCount(FieldCount fieldCount) {
-
-        TransportClient client = null;
-        try {
-            client = getClient();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
 
         //获取查询条件(从IndexDate类中获取)
         //此类条件对应的都是id
@@ -727,5 +707,95 @@ public class TailServiceImpl extends RequestFieldsBean implements TailService {
         }
         return list;
     }
+
+    /**
+     * 关键字查询
+     */
+    @Override
+    public List queryKeyWord(KeyWord ky){
+
+        //获取索引id，找到对应的索引名称
+        String index = ky.getIndexName();
+        List listIndex = tailList();
+        List elkLogTypeList = new ArrayList();
+        Indexs indexs;
+        for (int i = 0; i < listIndex.size(); i++) {
+            indexs = new Indexs(i, listIndex.get(i).toString(),"");
+            elkLogTypeList.add(indexs);
+        }
+        Gson gsonIndex = new Gson();
+        String s1 = gsonIndex.toJson(elkLogTypeList);
+        JSONArray jsonArrayIndex = JSONArray.fromObject(s1);
+        JSONObject jsonObjectIndex = jsonArrayIndex.getJSONObject(Integer.parseInt(index));
+        String indexName = jsonObjectIndex.get(RequestFieldsBean.getNAME()).toString();
+
+        //获取开始时间和结束时间
+        String beginTime = ky.getBeginTime();
+        String endTime = ky.getEndTime();
+
+        //获取关键字
+        String keyWord = ky.getKeyWord();
+
+        QueryBuilder boolQuery = QueryBuilders.boolQuery();
+
+        QueryBuilder qbRang = QueryBuilders
+                .rangeQuery(FieldBean.getCREATTIME())
+                .from(beginTime)
+                .to(endTime);
+
+        QueryBuilder matchQuery = QueryBuilders
+                .matchQuery(FieldBean.getMESSAGE(), keyWord);
+
+        ((BoolQueryBuilder) boolQuery).must(qbRang);
+        ((BoolQueryBuilder) boolQuery).must(matchQuery);
+
+        SearchResponse searchResponse = client
+                .prepareSearch(indexName)
+                .setQuery(boolQuery)
+                .execute().actionGet();
+
+        List keyWordList = scrollOutput(searchResponse);
+
+        return keyWordList;
+    }
+
+
+    /**导出文件方法
+     * @param export 定义的导出文件需要的参数
+     * @return 返回值为list
+     */
+    @Override
+    public List<SearchHit> export(Export export){
+
+        String indexesName = export.getIndexes();
+        String startTime = export.getStartTime();
+        String endTime = export.getEndTime();
+
+        List list = tailList();
+        List elkLogTypeList = new ArrayList();
+        Indexs indexs;
+        for (int i = 0; i < list.size(); i++) {
+            indexs = new Indexs(i, list.get(i).toString(),"");
+            elkLogTypeList.add(indexs);
+        }
+        Gson gson = new Gson();
+        String s1 = gson.toJson(elkLogTypeList);
+        JSONArray jsonArray = JSONArray.fromObject(s1);
+        JSONObject jsonObject = jsonArray.getJSONObject(Integer.parseInt(indexesName));
+        String indexName = jsonObject.get(RequestFieldsBean.getNAME()).toString();
+
+        RangeQueryBuilder qb = QueryBuilders.rangeQuery(FieldBean.getCREATTIME()).from(startTime).to(endTime);
+        SearchResponse response = client.prepareSearch(indexName)
+                .setQuery(qb)
+                .setSize(100000)
+                .execute().actionGet();
+
+        List exportList = scrollOutput(response);
+
+        return exportList;
+    }
+
+
+
 
 }

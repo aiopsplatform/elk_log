@@ -5,6 +5,7 @@ import com.ai.platform.util.FieldBean;
 import com.ai.platform.util.RequestFieldsBean;
 import com.ai.platform.util.SlowRequestCountBean;
 import com.ai.pojo.*;
+import com.ai.pojo.Export;
 import com.google.gson.Gson;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -12,6 +13,7 @@ import org.elasticsearch.search.SearchHit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.*;
 import java.net.UnknownHostException;
 import java.util.*;
 
@@ -20,6 +22,7 @@ import java.util.*;
 @RequestMapping(value = "/index")
 public class TailController {
 
+    private static List<SearchHit> selectIndexByTimeList;
 
     @Autowired
     private TailService tailService;
@@ -47,16 +50,19 @@ public class TailController {
 
         List list = tailService.tailList();
 
-        Indexs indexs ;
+        int count = tailService.tailList().size();
+//        System.out.println(count);
+
+        Indexs indexs;
 //        System.out.println(list.size());
 //        System.out.println(list);
-        for (int i = 0; i < list.size() - 3; i++) {
-            if (list.get(i).toString().contains("nginx")){
-                indexs = new Indexs(i, list.get(i).toString(),"Nginx日志");
+        for (int i = 0; i < 1; i++) {
+//            System.out.println(list.get(i).toString());
+            if (list.get(i).toString().contains("nginx")) {
+                indexs = new Indexs(i, list.get(i).toString(), "Nginx日志");
                 elkLogTypeList.add(indexs);
             }
         }
-
         return elkLogTypeList;
     }
 
@@ -80,10 +86,10 @@ public class TailController {
         //解析索引名称对应的id
         String indexes = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
 
-        IndexDate indexDate = new IndexDate(indexes, start_Time, end_Time , page);
+        IndexDate indexDate = new IndexDate(indexes, start_Time, end_Time, page);
 
         //将所有日志存放到list数组中
-        List<SearchHit> selectIndexByTimeList = tailService.selectByTime(indexDate);
+        selectIndexByTimeList = tailService.selectByTime(indexDate);
 
         //将list转换为json格式返回给前端
         String json = selectGson.toJson(selectIndexByTimeList);
@@ -93,16 +99,6 @@ public class TailController {
 
         return json;
     }
-
-    /**
-     * 条件查询中的分页
-     */
-    @PostMapping
-    @ResponseBody
-    public String pageSearch() throws UnknownHostException {
-        return null;
-    }
-
 
     /**
      * 实时查询，每个一秒接受一个请求，从后台进行查询
@@ -257,6 +253,139 @@ public class TailController {
 //        System.out.println(fieldsList);
 
         return fieldsList;
+    }
+
+
+    /**
+     * 关键字查询
+     */
+    @PostMapping(value = "queryKeyword")
+    @ResponseBody
+    public String queryKeyword(@RequestBody JSONObject jsonObject) {
+
+        //索引名称
+        String index = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
+        //开始时间
+        String beginTime = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
+        //结束时间
+        String endTime = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
+        //关键字
+        String keyWord = jsonObject.get(RequestFieldsBean.getKEYWORD()).toString();
+
+        KeyWord ky = new KeyWord(index, beginTime, endTime, keyWord);
+
+        List keywordList = tailService.queryKeyWord(ky);
+
+        Gson keywordGson = new Gson();
+
+        //将list转换为json格式返回给前端
+        String json = keywordGson.toJson(keywordList);
+
+//        System.out.println(json);
+
+        return json;
+
+    }
+
+
+    /**
+     * 导出查询到的文件功能
+     */
+    @PostMapping(value = "exportLogs")
+    @ResponseBody
+    public  void exportLogs(@RequestBody JSONObject jsonObject){
+        //解析begin_time和end_time对应的开始时间
+        String start_Time = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
+        String end_Time = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
+
+        //解析索引名称对应的id
+        String indexes = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
+
+        Export export = new Export(indexes, start_Time, end_Time);
+
+        List list = tailService.export(export);
+
+        File file = new File("D:/nginx-access-log.txt");
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        boolean isSuccess = exportTxt(file, list);
+        System.out.println(isSuccess);
+
+    }
+    /**
+     * 导出
+     * @param file     Txt文件(路径+文件名)，Txt文件不存在会自动创建
+     * @param dataList 数据
+     * @return
+     */
+    public static boolean exportTxt(File file, List<String> dataList) {
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(file);
+            return exportTxtByOS(out, dataList);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    /**
+     * 导出
+     * @param out      输出流
+     * @param dataList 数据
+     * @return
+     */
+    public static boolean exportTxtByOS(OutputStream out, List<String> dataList) {
+        boolean isSucess = false;
+
+        OutputStreamWriter osw = null;
+        BufferedWriter bw = null;
+        try {
+            osw = new OutputStreamWriter(out);
+            bw = new BufferedWriter(osw);
+            // 循环数据
+            for (int i = 0; i < dataList.size(); i++) {
+
+                bw.append(dataList.get(i)).append("\r\n");
+            }
+
+            isSucess = true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            isSucess = false;
+
+        } finally {
+            if (bw != null) {
+                try {
+                    bw.close();
+                    bw = null;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (osw != null) {
+                try {
+                    osw.close();
+                    osw = null;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (out != null) {
+                try {
+                    out.close();
+                    out = null;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return isSucess;
     }
 
 

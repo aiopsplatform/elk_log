@@ -13,13 +13,13 @@ public interface TailService {
     List<String> tailList() throws UnknownHostException;
 
     //根据索引名称等、开始时间和结束时间进行查询
-    List<SearchHit> selectByTime(IndexDate indexDate) throws UnknownHostException;
+    List<SearchHit> selectByTime(IndexDate indexDate);
 
     //实时查询
-    List<SearchHit> selectRealTimeQuery(String indexes) throws UnknownHostException;
+    List<SearchHit> selectRealTimeQuery(String indexes);
 
     //异常统计
-    Map count(ExceptionCount exceptionCount) throws UnknownHostException;
+    Map count(ExceptionCount exceptionCount);
 
     /**
      * 慢请求统计
@@ -41,5 +41,11 @@ public interface TailService {
 
     //字段统计
     List fieldsCount(FieldCount fieldCount);
+
+    //关键字查询
+    List<SearchHit> queryKeyWord(KeyWord ky);
+
+    //导出功能
+    List<SearchHit> export(Export export);
 
 }
