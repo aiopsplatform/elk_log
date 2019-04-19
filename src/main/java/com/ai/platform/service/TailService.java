@@ -2,11 +2,13 @@ package com.ai.platform.service;
 
 import com.ai.pojo.*;
 import org.elasticsearch.search.SearchHit;
+import org.springframework.stereotype.Service;
 
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 
+@Service
 public interface TailService {
 
     //获取所有用户的列表
@@ -46,6 +48,6 @@ public interface TailService {
     List<SearchHit> queryKeyWord(KeyWord ky);
 
     //导出功能
-    List<SearchHit> export(Export export);
+    String downLoadLog(Log log);
 
 }

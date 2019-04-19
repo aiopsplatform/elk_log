@@ -5,16 +5,20 @@ import com.ai.platform.util.FieldBean;
 import com.ai.platform.util.RequestFieldsBean;
 import com.ai.platform.util.SlowRequestCountBean;
 import com.ai.pojo.*;
-import com.ai.pojo.Export;
 import com.google.gson.Gson;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.elasticsearch.search.SearchHit;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.UnknownHostException;
+import java.security.PrivateKey;
 import java.util.*;
 
 @CrossOrigin
@@ -23,6 +27,8 @@ import java.util.*;
 public class TailController {
 
     private static List<SearchHit> selectIndexByTimeList;
+
+    private static String json;
 
     @Autowired
     private TailService tailService;
@@ -92,7 +98,7 @@ public class TailController {
         selectIndexByTimeList = tailService.selectByTime(indexDate);
 
         //将list转换为json格式返回给前端
-        String json = selectGson.toJson(selectIndexByTimeList);
+        json = selectGson.toJson(selectIndexByTimeList);
 
 
 //        System.out.println(json);
@@ -287,106 +293,55 @@ public class TailController {
 
     }
 
+    @GetMapping(value = "exportLogs")
+    public void testDownload(HttpServletRequest request, HttpServletResponse res) {
 
-    /**
-     * 导出查询到的文件功能
-     */
-    @PostMapping(value = "exportLogs")
-    @ResponseBody
-    public  void exportLogs(@RequestBody JSONObject jsonObject){
-        //解析begin_time和end_time对应的开始时间
-        String start_Time = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
-        String end_Time = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
-
+        String start_Time = request.getParameter(RequestFieldsBean.getBEGINTIME());
+        String end_Time = request.getParameter(RequestFieldsBean.getENDTIME());
         //解析索引名称对应的id
-        String indexes = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
+        String indexes = request.getParameter(RequestFieldsBean.getINDEX());
 
-        Export export = new Export(indexes, start_Time, end_Time);
+//        System.out.println(indexes);
+//        System.out.println(start_Time);
+//        System.out.println(end_Time);
 
-        List list = tailService.export(export);
+//        String start_Time = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
+//        String end_Time = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
+//        //解析索引名称对应的id
+//        String indexes = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
 
-        File file = new File("D:/nginx-access-log.txt");
-        if (!file.exists()) {
+        Log log = new Log(indexes, start_Time, end_Time);
+
+        String downLoadLog = tailService.downLoadLog(log);
+
+        String fileName = "log.txt";
+
+        res.setHeader("content-type", "application/octet-stream");
+        res.setContentType("application/octet-stream");
+        res.setHeader("Content-Disposition", "attachment; filename=" + fileName);
+        OutputStream os = null;
+        try {
+            //获取response中的字节输出流
+            os = res.getOutputStream();
+            //使用response的字节输出流输出在内存中的查询结果
+            os.write(downLoadLog.getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
             try {
-                file.createNewFile();
+                os.flush();
+                os.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        boolean isSuccess = exportTxt(file, list);
-        System.out.println(isSuccess);
-
-    }
-    /**
-     * 导出
-     * @param file     Txt文件(路径+文件名)，Txt文件不存在会自动创建
-     * @param dataList 数据
-     * @return
-     */
-    public static boolean exportTxt(File file, List<String> dataList) {
-        FileOutputStream out = null;
-        try {
-            out = new FileOutputStream(file);
-            return exportTxtByOS(out, dataList);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-    /**
-     * 导出
-     * @param out      输出流
-     * @param dataList 数据
-     * @return
-     */
-    public static boolean exportTxtByOS(OutputStream out, List<String> dataList) {
-        boolean isSucess = false;
-
-        OutputStreamWriter osw = null;
-        BufferedWriter bw = null;
-        try {
-            osw = new OutputStreamWriter(out);
-            bw = new BufferedWriter(osw);
-            // 循环数据
-            for (int i = 0; i < dataList.size(); i++) {
-
-                bw.append(dataList.get(i)).append("\r\n");
-            }
-
-            isSucess = true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            isSucess = false;
-
-        } finally {
-            if (bw != null) {
-                try {
-                    bw.close();
-                    bw = null;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (osw != null) {
-                try {
-                    osw.close();
-                    osw = null;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (out != null) {
-                try {
-                    out.close();
-                    out = null;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return isSucess;
     }
 
 
 }
+
+
+
+
+
+
