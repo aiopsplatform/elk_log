@@ -2,10 +2,10 @@ package com.ai.platform.util;
 
 public class SloveHardCountBean {
 
-    public static String CLUSTERNAME = "cluster.name";
-    public static String APPNAME = "my-application";
-    public static String INETADDR = "192.168.126.122";
-    public static int CLIENTPORT = 9300;
+    public static final String CLUSTERNAME = "cluster.name";
+    public static final String APPNAME = "my-application";
+    public static final String INETADDR = "192.168.126.122";
+    public static final int CLIENTPORT = 9300;
 //    public static String ELKINDEX = "logstash-nginx-access-log";
 
     public static String getClusterName() {

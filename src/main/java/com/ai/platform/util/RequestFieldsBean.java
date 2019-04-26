@@ -5,19 +5,21 @@ package com.ai.platform.util;
  */
 public class RequestFieldsBean {
 
-    private static String INDEX = "indexes";
-    private static String TYPE = "types";
-    private static String BEGINTIME = "begin_time";
-    private static String ENDTIME = "end_time";
-    private static String FIELD = "field";
-    private static String QUERYCONDITION = "queryCondition";
-    private static String RULE = "rule";
-    private static String FIELDS = "fields";
-    private static String SYMBOL = "symbol";
-    private static String NUMBER = "number";
-    private static String NAME = "name";
-    private static String PAGE = "page";
-    private static String KEYWORD = "keyword";
+    private static final String INDEX = "indexes";
+    private static final String TYPE = "types";
+    private static final String BEGINTIME = "begin_time";
+    private static final String ENDTIME = "end_time";
+    private static final String FIELD = "field";
+    private static final String QUERYCONDITION = "queryCondition";
+    private static final String RULE = "rule";
+    private static final String FIELDS = "fields";
+    private static final String SYMBOL = "symbol";
+    private static final String NUMBER = "number";
+    private static final String NAME = "name";
+    private static final String PAGE = "page";
+    private static final String KEYWORD = "keyword";
+    private static final String TIMESLICING = "timeSlicing";
+    private static final String STATICALTYPE = "staticalType";
 
     public static String getINDEX() {
         return INDEX;
@@ -69,5 +71,13 @@ public class RequestFieldsBean {
 
     public static String getKEYWORD() {
         return KEYWORD;
+    }
+
+    public static String getTIMESLICING() {
+        return TIMESLICING;
+    }
+
+    public static String getSTATICALTYPE() {
+        return STATICALTYPE;
     }
 }

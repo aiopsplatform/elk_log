@@ -2,16 +2,16 @@ package com.ai.platform.util;
 
 public class FieldBean {
 
-    private static String ELKTYPE = "doc";
-    private static String PROPERTIES = "properties";
-    private static String TIMEPSTAMP = "@";
-    private static String OFFSET = "offset";
-    private static String SOURCE = "source";
-    private static String TAGS = "tags";
-    private static String CREATTIME = "@timestamp";
-    private static String RESPONSE = "response";
-    private static String MESSAGE = "message";
-    private static String TYPE = "type";
+    private static final String ELKTYPE = "doc";
+    private static final String PROPERTIES = "properties";
+    private static final String TIMEPSTAMP = "@";
+    private static final String OFFSET = "offset";
+    private static final String SOURCE = "source";
+    private static final String TAGS = "tags";
+    private static final String CREATETIME = "create_time";
+    private static final String RESPONSE = "response";
+    private static final String MESSAGE = "message";
+    private static final String TYPE = "type";
 
     public static String getELKTYPE() {
         return ELKTYPE;
@@ -38,7 +38,7 @@ public class FieldBean {
     }
 
     public static String getCREATTIME() {
-        return CREATTIME;
+        return CREATETIME;
     }
 
     public static String getRESPONSE() {

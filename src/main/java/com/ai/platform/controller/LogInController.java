@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 用户登陆操作
+ */
 @RestController
 @RequestMapping(value = "index")
 public class LogInController {

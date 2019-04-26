@@ -1,169 +1,28 @@
 package com.ai.platform.controller;
 
 import com.ai.platform.service.TailService;
-import com.ai.platform.util.FieldBean;
+import com.ai.platform.test.TestDao;
 import com.ai.platform.util.RequestFieldsBean;
 import com.ai.platform.util.SlowRequestCountBean;
 import com.ai.pojo.*;
-import com.google.gson.Gson;
-import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.elasticsearch.search.SearchHit;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.*;
 import java.net.UnknownHostException;
-import java.security.PrivateKey;
 import java.util.*;
 
-@CrossOrigin
 @RestController
 @RequestMapping(value = "/index")
 public class TailController {
 
-    private static List<SearchHit> selectIndexByTimeList;
-
-    private static String json;
-
     @Autowired
     private TailService tailService;
 
-    //下拉框，查询所有索引文件的名称
-    @GetMapping("/indexAll")
-    public String tailList() throws UnknownHostException {
+    @Autowired
+    private TestDao testDao;
 
-        List ls = tailService.tailList();
-
-        Gson gson = new Gson();
-
-        String st = gson.toJson(ls);
-
-        return st;
-
-        //System.out.println(st);
-    }
-
-
-    //查询ElkLogType
-    @GetMapping("/getElkLogType")
-    public List getElkLogType() throws UnknownHostException {
-        List elkLogTypeList = new ArrayList();
-
-        List list = tailService.tailList();
-
-        int count = tailService.tailList().size();
-//        System.out.println(count);
-
-        Indexs indexs;
-//        System.out.println(list.size());
-//        System.out.println(list);
-        for (int i = 0; i < 1; i++) {
-//            System.out.println(list.get(i).toString());
-            if (list.get(i).toString().contains("nginx")) {
-                indexs = new Indexs(i, list.get(i).toString(), "Nginx日志");
-                elkLogTypeList.add(indexs);
-            }
-        }
-        return elkLogTypeList;
-    }
-
-
-    /**
-     * 通过索引名称，开始时间和结束时间查询日志数据
-     */
-    @PostMapping(value = "selectByIndex")
-    @ResponseBody
-    public String selectByTime(@RequestBody JSONObject jsonObject) throws Exception {
-
-        Gson selectGson = new Gson();
-
-//        System.out.println(jsonObject);
-
-        //解析begin_time和end_time对应的开始时间
-        String start_Time = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
-        String end_Time = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
-        int page = Integer.parseInt(jsonObject.get(RequestFieldsBean.getPAGE()).toString());
-
-        //解析索引名称对应的id
-        String indexes = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
-
-        IndexDate indexDate = new IndexDate(indexes, start_Time, end_Time, page);
-
-        //将所有日志存放到list数组中
-        selectIndexByTimeList = tailService.selectByTime(indexDate);
-
-        //将list转换为json格式返回给前端
-        json = selectGson.toJson(selectIndexByTimeList);
-
-
-//        System.out.println(json);
-
-        return json;
-    }
-
-    /**
-     * 实时查询，每个一秒接受一个请求，从后台进行查询
-     */
-    @PostMapping(value = "selectRealTimeQuery")
-    @ResponseBody
-    public String selectRealTimeQuery(@RequestBody JSONObject jsonObject) throws UnknownHostException {
-
-        Gson realTimeGson = new Gson();
-        List realTimeList = new ArrayList();
-
-        //解析索引名称对应的id
-        String indexes = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
-
-        List<SearchHit> selectRealTime = tailService.selectRealTimeQuery(indexes);
-
-        //需要将list转换成json格式
-        for (SearchHit logMessage : selectRealTime) {
-            String message = logMessage.getSourceAsMap().get(FieldBean.getMESSAGE()).toString();
-            realTimeList.add(message);
-        }
-        //将list转换为json格式返回给前端
-        String realJson = realTimeGson.toJson(realTimeList);
-
-        return realJson;
-
-    }
-
-    /**
-     * 异常统计
-     */
-    @PostMapping(value = "exceptionCount")
-    @ResponseBody
-    public List exceptionCount(@RequestBody JSONObject jsonObject) throws Exception {
-
-        /*
-         * indexes -- 索引名称
-         * beginTime -- 开始时间
-         * endTime -- 结束时间
-         */
-        String indexes = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
-        String beginTime = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
-        String endTime = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
-
-        ExceptionCount exceptionCount = new ExceptionCount(indexes, beginTime, endTime);
-        Map<Integer, Long> selectExceptionCount = tailService.count(exceptionCount);
-        List list = new ArrayList();
-        for (Integer key : selectExceptionCount.keySet()) {
-            Long value = selectExceptionCount.get(key);
-
-            ExceptionValue value1 = new ExceptionValue(key, value);
-            list.add(value1);
-        }
-
-        Collections.sort(list);
-
-
-        return list;
-    }
+//
 
 
     /**
@@ -172,6 +31,8 @@ public class TailController {
     @PostMapping(value = "slowRequestCount")
     @ResponseBody
     public List slowCount(@RequestBody JSONObject jsonObject) throws UnknownHostException {
+
+        System.out.println(testDao.getField1());
 
         //从请求中获取对应字段的参数
         String index = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
@@ -209,133 +70,82 @@ public class TailController {
         return list;
     }
 
-    /**
-     * 通过索引名称获取所有字段的名称(和字段类型)
-     */
-    @PostMapping(value = "getIndexMetaData")
-    @ResponseBody
-    public List getIndexMetaData(@RequestBody JSONObject jsonObject) {
-        //获取前端发来的请求携带的参数
-        String index = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
-        List fieldList = tailService.selectFieldsList(index);
-        return fieldList;
-    }
-
-    /**
-     * 字段统计
-     */
-    @PostMapping(value = "fieldStatistics")
-    @ResponseBody
-    public List selectFieldCount(@RequestBody JSONObject jsonObject) {
-
-//        System.out.println(jsonObject);
-
-        //索引名称
-        String index = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
-        //开始时间
-        String beginTime = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
-        //结束时间
-        String endTime = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
-        //字段名称
-        String fieldNameId = jsonObject.get(RequestFieldsBean.getFIELD()).toString();
-        //查询条件
-
-        JSONArray queryCondition = (JSONArray) jsonObject.get(RequestFieldsBean.getQUERYCONDITION());
 
 
-        //分段规则
-        String rule = null;
-        try {
-            rule = jsonObject.get(RequestFieldsBean.getRULE()).toString();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
-        FieldCount fieldCount = new FieldCount(index, beginTime, endTime, fieldNameId, queryCondition, rule);
-
-        List fieldsList = tailService.fieldsCount(fieldCount);
-
-//        System.out.println(fieldsList);
-
-        return fieldsList;
-    }
-
-
-    /**
-     * 关键字查询
-     */
-    @PostMapping(value = "queryKeyword")
-    @ResponseBody
-    public String queryKeyword(@RequestBody JSONObject jsonObject) {
-
-        //索引名称
-        String index = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
-        //开始时间
-        String beginTime = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
-        //结束时间
-        String endTime = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
-        //关键字
-        String keyWord = jsonObject.get(RequestFieldsBean.getKEYWORD()).toString();
-
-        KeyWord ky = new KeyWord(index, beginTime, endTime, keyWord);
-
-        List keywordList = tailService.queryKeyWord(ky);
-
-        Gson keywordGson = new Gson();
-
-        //将list转换为json格式返回给前端
-        String json = keywordGson.toJson(keywordList);
-
-//        System.out.println(json);
-
-        return json;
-
-    }
-
-    @GetMapping(value = "exportLogs")
-    public void testDownload(HttpServletRequest request, HttpServletResponse res) {
-
-        String start_Time = request.getParameter(RequestFieldsBean.getBEGINTIME());
-        String end_Time = request.getParameter(RequestFieldsBean.getENDTIME());
-        //解析索引名称对应的id
-        String indexes = request.getParameter(RequestFieldsBean.getINDEX());
-
-//        System.out.println(indexes);
-//        System.out.println(start_Time);
-//        System.out.println(end_Time);
-
+//    //字段统计——————按时间分段统计
+//    @PostMapping(value = "")
+//    @ResponseBody
+//    public String timeAggMma(@RequestBody JSONObject jsonObject){
 //        String start_Time = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
 //        String end_Time = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
 //        //解析索引名称对应的id
 //        String indexes = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
+//
+//        //从前端获取的时间聚合规则(按分钟、小时、天数)
+//        String timeSlicing = "????";
+//
+//        //从前端获取的统计类型(总和/最大值/最小值/平均值)
+//        String staticalType = "????";
+//
+//        //按分钟统计
+//        if (timeSlicing.equals("minutes")) {
+//            if (staticalType.equals(NumberIdBean.getZERO())){
+//
+//            }
+//            if (staticalType.equals(NumberIdBean.getONE())){
+//
+//            }
+//            if (staticalType.equals(NumberIdBean.getTWO())){
+//
+//            }
+//            if (staticalType.equals(NumberIdBean.getTHREE())){
+//
+//            }
+//        }
+//        //按小时统计
+//        if (timeSlicing.equals("hour")){
+//            if (staticalType.equals(NumberIdBean.getZERO())){
+//
+//            }
+//            if (staticalType.equals(NumberIdBean.getONE())){
+//
+//            }
+//            if (staticalType.equals(NumberIdBean.getTWO())){
+//
+//            }
+//            if (staticalType.equals(NumberIdBean.getTHREE())){
+//
+//            }
+//        }
+//        //按天统计
+//        if (timeSlicing.equals("day")){
+//            if (staticalType.equals(NumberIdBean.getZERO())){
+//
+//            }
+//            if (staticalType.equals(NumberIdBean.getONE())){
+//
+//            }
+//            if (staticalType.equals(NumberIdBean.getTWO())){
+//
+//            }
+//            if (staticalType.equals(NumberIdBean.getTHREE())){
+//
+//            }
+//        }
+//
+//
+//        return null;
+//    }
 
-        Log log = new Log(indexes, start_Time, end_Time);
 
-        String downLoadLog = tailService.downLoadLog(log);
 
-        String fileName = "log.txt";
 
-        res.setHeader("content-type", "application/octet-stream");
-        res.setContentType("application/octet-stream");
-        res.setHeader("Content-Disposition", "attachment; filename=" + fileName);
-        OutputStream os = null;
-        try {
-            //获取response中的字节输出流
-            os = res.getOutputStream();
-            //使用response的字节输出流输出在内存中的查询结果
-            os.write(downLoadLog.getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }finally {
-            try {
-                os.flush();
-                os.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+
+
+
+
+
+
 
 
 }
