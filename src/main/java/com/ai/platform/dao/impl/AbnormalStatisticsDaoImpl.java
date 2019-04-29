@@ -33,14 +33,14 @@ public class AbnormalStatisticsDaoImpl implements AbnormalStatisticsDao {
      */
     @Override
     public Map count(ExceptionCount exceptionCount) {
-        Map map = new HashMap();
+        Map<Integer, Long> map = new HashMap<>();
 
         String indexes = exceptionCount.getIndexName();
         String beginTime = exceptionCount.getBegin_time();
         String endTime = exceptionCount.getEnd_time();
 
         List list = queryIndexService.tailList();
-        List elkLogTypeList = new ArrayList();
+        List<Indexs> elkLogTypeList = new ArrayList<>();
         Indexs indexs;
         for (int i = 0; i < list.size(); i++) {
             indexs = new Indexs(i, list.get(i).toString(), "");

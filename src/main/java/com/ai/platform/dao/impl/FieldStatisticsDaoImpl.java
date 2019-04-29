@@ -49,12 +49,12 @@ public class FieldStatisticsDaoImpl implements FieldStatisticsDao {
      */
     @Override
     public List selectFieldsList(String index) {
-        List<String> list = new ArrayList();
+        List<String> list = new ArrayList<>();
         Indexs indexs;
         ImmutableOpenMap<String, MappingMetaData> mappings;
         String mapping = "";
         List list1 = queryIndexService.tailList();
-        List elkLogTypeList = new ArrayList();
+        List<Indexs> elkLogTypeList = new ArrayList<>();
         for (int i = 0; i < list1.size(); i++) {
             indexs = new Indexs(i, list1.get(i).toString(), "");
             elkLogTypeList.add(indexs);
@@ -78,10 +78,10 @@ public class FieldStatisticsDaoImpl implements FieldStatisticsDao {
         String doc = jsonObject.getString(FieldBean.getELKTYPE());
         JSONObject jsonObject1 = JSONObject.fromObject(doc);
         String properties = jsonObject1.getString(FieldBean.getPROPERTIES());
-        JSONObject jsonObject2 = JSONObject.fromObject(properties);
-        Map<String, Map<String, String>> map = jsonObject2;
-        Map mp = new HashMap();
-        String key = null;
+//        JSONObject jsonObject2 = JSONObject.fromObject(properties);
+        Map<String, Map<String, String>> map = JSONObject.fromObject(properties);
+        Map<String, String> mp = new HashMap<>();
+        String key;
         for (Map.Entry<String, Map<String, String>> str : map.entrySet()) {
             if (!str.getKey().contains(FieldBean.getTIMEPSTAMP()) & !str.getKey().contains(FieldBean.getOFFSET()) & !str.getKey().contains(FieldBean.getSOURCE()) & !str.getKey().contains(FieldBean.getTAGS())) {
                 key = str.getKey();
@@ -94,7 +94,7 @@ public class FieldStatisticsDaoImpl implements FieldStatisticsDao {
                 }
             }
         }
-        List ls = new ArrayList();
+        List<Indexs> ls = new ArrayList<>();
         int indexOf = list.indexOf(FieldBean.getRESPONSE());
         for (int i = 0; i < 1; i++) {
             indexs = new Indexs(i, list.get(indexOf), "");

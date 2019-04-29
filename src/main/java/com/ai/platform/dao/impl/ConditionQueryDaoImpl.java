@@ -42,7 +42,7 @@ public class ConditionQueryDaoImpl implements ConditionQueryDao {
         int page = indexDate.getPage();
 
         List list = queryIndexService.tailList();
-        List elkLogTypeList = new ArrayList();
+        List<Indexs> elkLogTypeList = new ArrayList<>();
         Indexs indexs;
         for (int i = 0; i < list.size(); i++) {
             indexs = new Indexs(i, list.get(i).toString(), "");
@@ -74,7 +74,7 @@ public class ConditionQueryDaoImpl implements ConditionQueryDao {
 
     public List scrollOutput(SearchResponse response) {
         SearchHits hits = response.getHits();
-        List list = new ArrayList();
+        List<String> list = new ArrayList<>();
         for (int j = 0; j < hits.getHits().length; j++) {
             try {
                 String message = hits.getHits()[j].getSourceAsMap().get(FieldBean.getMESSAGE()).toString();
@@ -96,7 +96,7 @@ public class ConditionQueryDaoImpl implements ConditionQueryDao {
         //获取索引id，找到对应的索引名称
         String index = ky.getIndexName();
         List listIndex = queryIndexService.tailList();
-        List elkLogTypeList = new ArrayList();
+        List<Indexs> elkLogTypeList = new ArrayList<>();
         Indexs indexs;
         for (int i = 0; i < listIndex.size(); i++) {
             indexs = new Indexs(i, listIndex.get(i).toString(), "");
@@ -139,7 +139,7 @@ public class ConditionQueryDaoImpl implements ConditionQueryDao {
         String startTime = log.getStartTime();
         String endTime = log.getEndTime();
         List list = queryIndexService.tailList();
-        List elkLogTypeList = new ArrayList();
+        List<Indexs> elkLogTypeList = new ArrayList<>();
         Indexs indexs;
         for (int i = 0; i < list.size(); i++) {
             indexs = new Indexs(i, list.get(i).toString(), "");

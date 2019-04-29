@@ -24,9 +24,12 @@ public class ConditionQueryServiceImpl implements ConditionQueryService {
     @Autowired
     private ConditionQueryDao conditionQueryDao;
 
+
+
     @Override
     public String selectByTime(JSONObject jsonObject) {
         Gson selectGson = new Gson();
+        String json;
         //解析begin_time和end_time对应的开始时间
         String start_Time = jsonObject.get(RequestFieldsBean.getBEGINTIME()).toString();
         String end_Time = jsonObject.get(RequestFieldsBean.getENDTIME()).toString();
@@ -37,12 +40,13 @@ public class ConditionQueryServiceImpl implements ConditionQueryService {
         //将所有日志存放到list数组中
         List<SearchHit> selectIndexByTimeList = conditionQueryDao.selectByTime(indexDate);
         //将list转换为json格式返回给前端
-        String json = selectGson.toJson(selectIndexByTimeList);
+        json = selectGson.toJson(selectIndexByTimeList);
         return json;
     }
 
     @Override
     public String queryKeyword(JSONObject jsonObject) {
+        String json;
         //索引名称
         String index = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
         //开始时间
@@ -55,7 +59,7 @@ public class ConditionQueryServiceImpl implements ConditionQueryService {
         List keywordList = conditionQueryDao.queryKeyWord(ky);
         Gson keywordGson = new Gson();
         //将list转换为json格式返回给前端
-        String json = keywordGson.toJson(keywordList);
+        json = keywordGson.toJson(keywordList);
         return json;
     }
 

@@ -30,7 +30,7 @@ public class AbnormalStatisticsServiceImpl implements AbnormalStatisticsService 
 
         ExceptionCount exceptionCount = new ExceptionCount(indexes, beginTime, endTime);
         Map<Integer, Long> selectExceptionCount = abnormalStatisticsDao.count(exceptionCount);
-        List list = new ArrayList();
+        List<ExceptionValue> list = new ArrayList<>();
         for (Integer key : selectExceptionCount.keySet()) {
             Long value = selectExceptionCount.get(key);
 

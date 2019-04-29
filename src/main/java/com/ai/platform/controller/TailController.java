@@ -32,7 +32,7 @@ public class TailController {
     @ResponseBody
     public List slowCount(@RequestBody JSONObject jsonObject) throws UnknownHostException {
 
-        System.out.println(testDao.getField1());
+        System.out.println(testDao.getFieldAvg());
 
         //从请求中获取对应字段的参数
         String index = jsonObject.get(RequestFieldsBean.getINDEX()).toString();

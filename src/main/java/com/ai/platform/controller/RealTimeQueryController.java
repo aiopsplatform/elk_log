@@ -22,8 +22,8 @@ public class RealTimeQueryController {
     @PostMapping(value = "selectRealTimeQuery")
     @ResponseBody
     public String selectRealTimeQuery(@RequestBody JSONObject jsonObject){
-
-        String realJson = realTimeQueryService.selectRealTimeQuery(jsonObject);
+        String realJson;
+        realJson = realTimeQueryService.selectRealTimeQuery(jsonObject);
 
         return realJson;
 
