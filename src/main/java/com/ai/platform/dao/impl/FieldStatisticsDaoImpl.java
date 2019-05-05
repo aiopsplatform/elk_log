@@ -14,7 +14,6 @@ import net.sf.json.JSONObject;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -32,7 +31,6 @@ import org.elasticsearch.search.aggregations.metrics.min.InternalMin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.net.UnknownHostException;
 import java.util.*;
 
 @Repository
@@ -50,7 +48,7 @@ public class FieldStatisticsDaoImpl implements FieldStatisticsDao {
     @Override
     public List selectFieldsList(String index) {
         List<String> list = new ArrayList<>();
-        Indexs indexs;
+        Indexs indexs = null;
         ImmutableOpenMap<String, MappingMetaData> mappings;
         String mapping = "";
         List list1 = queryIndexService.tailList();
@@ -112,11 +110,11 @@ public class FieldStatisticsDaoImpl implements FieldStatisticsDao {
         //获取查询条件(从IndexDate类中获取)
         //此类条件对应的都是id
         String index = fieldCount.getIndex();
-        List listIndex = queryIndexService.tailList();
-        List elkLogTypeList = new ArrayList();
-        Indexs indexs;
+        List<String> listIndex = queryIndexService.tailList();
+        List<Indexs> elkLogTypeList = new ArrayList<>();
+        Indexs indexs = null;
         for (int i = 0; i < listIndex.size(); i++) {
-            indexs = new Indexs(i, listIndex.get(i).toString(), "");
+            indexs = new Indexs(i, listIndex.get(i), "");
             elkLogTypeList.add(indexs);
         }
         Gson gsonIndex = new Gson();
@@ -220,7 +218,7 @@ public class FieldStatisticsDaoImpl implements FieldStatisticsDao {
                     execute().actionGet();
         }
         Terms terms = searchResponse.getAggregations().get("count");
-        List list = new ArrayList();
+        List<ChartCount> list = new ArrayList<>();
         ChartCount chartCount;
         //循环遍历bucket桶
         for (Terms.Bucket entry : terms.getBuckets()) {
@@ -250,7 +248,7 @@ public class FieldStatisticsDaoImpl implements FieldStatisticsDao {
         String index = fieldBlockAggregateStatics.getIndex();
         List listIndex = queryIndexService.tailList();
         List elkLogTypeList = new ArrayList();
-        Indexs indexs;
+        Indexs indexs = null;
         for (int i = 0; i < listIndex.size(); i++) {
             indexs = new Indexs(i, listIndex.get(i).toString(), "");
             elkLogTypeList.add(indexs);
@@ -288,11 +286,11 @@ public class FieldStatisticsDaoImpl implements FieldStatisticsDao {
         AggregationBuilder dateSlicing;
         AggregationBuilder maxMinAvg;
         SearchResponse response;
-        List timeRuleList = null;
+        List<Object> timeRuleList = null;
         AggregationRule aggregationRule = null;
         MaxMinAvg mma = null;
 
-        switch (staticalType){
+        switch (staticalType) {
             //总和
             case "0":
                 if (timeSlicing.equals("minute")) {

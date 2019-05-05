@@ -2,7 +2,6 @@ package com.ai.platform.service.impl;
 
 import com.ai.platform.dao.FieldStatisticsDao;
 import com.ai.platform.service.FieldStatisticsService;
-import com.ai.platform.util.NumberIdBean;
 import com.ai.platform.util.RequestFieldsBean;
 import com.ai.pojo.FieldBlockAggregateStatics;
 import com.ai.pojo.FieldCount;

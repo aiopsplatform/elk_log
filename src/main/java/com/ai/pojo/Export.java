@@ -1,6 +1,6 @@
 package com.ai.pojo;
 
-public class Export {
+public final class Export {
 
     private String indexes;
     private String startTime;

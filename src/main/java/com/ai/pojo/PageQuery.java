@@ -2,7 +2,7 @@ package com.ai.pojo;
 
 import java.util.List;
 
-public class PageQuery {
+public final class PageQuery {
 
     private int page;
     private List list;

@@ -1,6 +1,6 @@
 package com.ai.pojo;
 
-public class KeyWord {
+public final class KeyWord {
 
     private String indexName;
     private String beginTime;

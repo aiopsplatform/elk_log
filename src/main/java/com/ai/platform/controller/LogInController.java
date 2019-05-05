@@ -17,7 +17,8 @@ public class LogInController {
 
     @PostMapping(value = "loginRequest")
     @ResponseBody
-    public List getLogin(@RequestBody JSONObject jsonObject) {
+    public List<Login> getLogin(@RequestBody JSONObject jsonObject) {
+        System.out.println(jsonObject);
         String username = jsonObject.get("username").toString();
         String password = jsonObject.get("password").toString();
         List<Login> list = new ArrayList<>();

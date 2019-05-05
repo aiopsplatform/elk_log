@@ -5,7 +5,6 @@ import com.ai.platform.dao.AbnormalStatisticsDao;
 import com.ai.platform.service.QueryIndexService;
 import com.ai.platform.util.FieldBean;
 import com.ai.platform.util.RequestFieldsBean;
-import com.ai.pojo.ChartCount;
 import com.ai.pojo.ExceptionCount;
 import com.ai.pojo.Indexs;
 import com.google.gson.Gson;
@@ -41,7 +40,7 @@ public class AbnormalStatisticsDaoImpl implements AbnormalStatisticsDao {
 
         List list = queryIndexService.tailList();
         List<Indexs> elkLogTypeList = new ArrayList<>();
-        Indexs indexs;
+        Indexs indexs = null ;
         for (int i = 0; i < list.size(); i++) {
             indexs = new Indexs(i, list.get(i).toString(), "");
             elkLogTypeList.add(indexs);

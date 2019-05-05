@@ -1,6 +1,6 @@
 package com.ai.pojo;
 
-public class Login {
+public final class Login {
 
     private String code;
 

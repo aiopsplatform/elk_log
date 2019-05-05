@@ -2,7 +2,7 @@ package com.ai.pojo;
 
 import java.util.List;
 
-public class ResponseParams {
+public final class ResponseParams {
 
     private List typeList;
     private List serviceList;
@@ -66,17 +66,5 @@ public class ResponseParams {
 
     public void setIpList(List ipList) {
         this.ipList = ipList;
-    }
-
-    @Override
-    public String toString() {
-        return "ResponseParams{" +
-                "typeList=" + typeList +
-                ", serviceList=" + serviceList +
-                ", instanceList=" + instanceList +
-                ", targetList=" + targetList +
-                ", nodeList=" + nodeList +
-                ", ipList=" + ipList +
-                '}';
     }
 }

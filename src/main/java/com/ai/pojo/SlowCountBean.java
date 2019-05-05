@@ -1,6 +1,6 @@
 package com.ai.pojo;
 
-public class SlowCountBean {
+public final class SlowCountBean {
 
     private String index;
     private String startTime;

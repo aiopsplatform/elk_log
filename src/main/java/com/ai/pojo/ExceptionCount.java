@@ -1,6 +1,6 @@
 package com.ai.pojo;
 
-public class ExceptionCount {
+public final class ExceptionCount {
 
     private String indexName;
     private String begin_time;

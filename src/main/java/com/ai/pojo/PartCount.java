@@ -1,6 +1,6 @@
 package com.ai.pojo;
 
-public class PartCount {
+public final class PartCount {
 
     private String name;
     private Long val;

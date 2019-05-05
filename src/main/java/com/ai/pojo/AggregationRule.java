@@ -1,6 +1,6 @@
 package com.ai.pojo;
 
-public class AggregationRule {
+public final class AggregationRule {
 
     private String aggTime;
     private String aggResponse;

@@ -1,6 +1,6 @@
 package com.ai.pojo;
 
-public class Log {
+public final class Log {
 
     private String indexes;
     private String startTime;

@@ -1,6 +1,6 @@
 package com.ai.pojo;
 
-public class MaxMinAvg {
+public final class MaxMinAvg {
 
     private String timeAgg;
     private double valueAgg;

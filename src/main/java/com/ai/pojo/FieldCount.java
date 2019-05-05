@@ -2,7 +2,7 @@ package com.ai.pojo;
 
 import net.sf.json.JSONArray;
 
-public class FieldCount {
+public final class FieldCount {
 
     private String index;
     private String beginTime;

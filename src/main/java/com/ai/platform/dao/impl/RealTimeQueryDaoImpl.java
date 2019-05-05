@@ -36,12 +36,12 @@ public class RealTimeQueryDaoImpl implements RealTimeQueryDao {
     @Override
     public List<SearchHit> selectRealTimeQuery(String indexes) {
 
-        List realTimeList = new ArrayList();
+        List<SearchHit> realTimeList = new ArrayList<>();
 
         //根据前端传来的indexes判断id的值，同时确定indexes的真实索引名称
         List list = queryIndexService.tailList();
-        List elkLogTypeList = new ArrayList();
-        Indexs indexs;
+        List<Indexs> elkLogTypeList = new ArrayList<>();
+        Indexs indexs = null;
         for (int i = 0; i < list.size(); i++) {
             indexs = new Indexs(i, list.get(i).toString(), "");
             elkLogTypeList.add(indexs);

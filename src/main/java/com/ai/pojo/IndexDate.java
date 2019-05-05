@@ -1,6 +1,6 @@
 package com.ai.pojo;
 
-public class IndexDate {
+public final class IndexDate {
 
     private String indexes;
     private String startTime;

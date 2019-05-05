@@ -1,6 +1,6 @@
 package com.ai.pojo;
 
-public class FieldBlockAggregateStatics {
+public final class FieldBlockAggregateStatics {
 
     private String index;
     private String startTime;

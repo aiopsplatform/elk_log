@@ -1,6 +1,6 @@
 package com.ai.pojo;
 
-public class ExceptionValue implements Comparable{
+public final class ExceptionValue implements Comparable{
 
     private Object name;
     private Object val;
@@ -8,11 +8,6 @@ public class ExceptionValue implements Comparable{
     public ExceptionValue(Object name, Object val) {
         this.name = name;
         this.val = val;
-    }
-
-    @Override
-    public int compareTo(Object o) {
-        return 0;
     }
 
     public Object getName() {
@@ -30,4 +25,10 @@ public class ExceptionValue implements Comparable{
     public void setVal(Object val) {
         this.val = val;
     }
+
+    @Override
+    public int compareTo(Object o) {
+        return 0;
+    }
+
 }

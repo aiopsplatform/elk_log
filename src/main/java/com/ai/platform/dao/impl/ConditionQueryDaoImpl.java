@@ -43,7 +43,7 @@ public class ConditionQueryDaoImpl implements ConditionQueryDao {
 
         List list = queryIndexService.tailList();
         List<Indexs> elkLogTypeList = new ArrayList<>();
-        Indexs indexs;
+        Indexs indexs = null;
         for (int i = 0; i < list.size(); i++) {
             indexs = new Indexs(i, list.get(i).toString(), "");
             elkLogTypeList.add(indexs);
@@ -75,13 +75,13 @@ public class ConditionQueryDaoImpl implements ConditionQueryDao {
     public List scrollOutput(SearchResponse response) {
         SearchHits hits = response.getHits();
         List<String> list = new ArrayList<>();
-        for (int j = 0; j < hits.getHits().length; j++) {
-            try {
+        try {
+            for (int j = 0; j < hits.getHits().length; j++) {
                 String message = hits.getHits()[j].getSourceAsMap().get(FieldBean.getMESSAGE()).toString();
                 list.add(message);
-            } catch (Exception e) {
-                e.printStackTrace();
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return list;
     }
@@ -97,7 +97,7 @@ public class ConditionQueryDaoImpl implements ConditionQueryDao {
         String index = ky.getIndexName();
         List listIndex = queryIndexService.tailList();
         List<Indexs> elkLogTypeList = new ArrayList<>();
-        Indexs indexs;
+        Indexs indexs = null;
         for (int i = 0; i < listIndex.size(); i++) {
             indexs = new Indexs(i, listIndex.get(i).toString(), "");
             elkLogTypeList.add(indexs);
@@ -138,11 +138,11 @@ public class ConditionQueryDaoImpl implements ConditionQueryDao {
         String indexesName = log.getIndexes();
         String startTime = log.getStartTime();
         String endTime = log.getEndTime();
-        List list = queryIndexService.tailList();
+        List<String> list = queryIndexService.tailList();
         List<Indexs> elkLogTypeList = new ArrayList<>();
-        Indexs indexs;
+        Indexs indexs = null;
         for (int i = 0; i < list.size(); i++) {
-            indexs = new Indexs(i, list.get(i).toString(), "");
+            indexs = new Indexs(i, list.get(i), "");
             elkLogTypeList.add(indexs);
         }
         Gson gson = new Gson();

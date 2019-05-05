@@ -21,8 +21,9 @@ public class RealTimeQueryServiceImpl implements RealTimeQueryService {
 
     @Override
     public String selectRealTimeQuery(JSONObject jsonObject){
+        String realJson;
         Gson realTimeGson = new Gson();
-        List realTimeList = new ArrayList();
+        List<String> realTimeList = new ArrayList<>();
 
         //解析索引名称对应的id
         String indexes = jsonObject.get(RequestFieldsBean.getINDEX()).toString();
@@ -35,7 +36,7 @@ public class RealTimeQueryServiceImpl implements RealTimeQueryService {
             realTimeList.add(message);
         }
         //将list转换为json格式返回给前端
-        String realJson = realTimeGson.toJson(realTimeList);
+        realJson = realTimeGson.toJson(realTimeList);
 
         return realJson;
 

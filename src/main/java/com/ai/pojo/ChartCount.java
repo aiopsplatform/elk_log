@@ -1,6 +1,6 @@
 package com.ai.pojo;
 
-public class ChartCount {
+public final class ChartCount {
 
     private String name;
     private Long value;

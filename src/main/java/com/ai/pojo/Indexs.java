@@ -1,6 +1,6 @@
 package com.ai.pojo;
 
-public class Indexs {
+public final class Indexs {
 
     private Integer id;
 
